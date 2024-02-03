@@ -1,7 +1,7 @@
 fastapi==0.109.0
 uvicorn==0.27.0.post1
 python-dotenv==1.0.1
-motor==3.3.2  # MongoDB asynchronous driver for FastAPI
+pymongo==4.6.1  # MongoDB asynchronous driver for FastAPI
 python-jose==3.3.0  # For JWT token handling
 httpx==0.26.0  # HTTP client for asynchronous requests
 httpx_oauthlib==1.0.0  # OAuth support for httpx
