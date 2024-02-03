@@ -76,11 +76,3 @@ Docker support is included for containerization. Use the provided Dockerfile and
 ```bash
 docker-compose up --build
 ```
-
-## Contributing
-
-Feel free to contribute to the project by opening issues or submitting pull requests. Follow the [Contributing Guidelines](CONTRIBUTING.md) for more details.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).

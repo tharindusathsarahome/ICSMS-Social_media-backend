@@ -4,7 +4,6 @@ from typing import AsyncGenerator, Dict
 from fastapi import Depends, HTTPException
 from httpx import AsyncClient, Response
 from app.core.config import PAGE_ID, ACCESS_TOKEN
-
 from app.core.config import FACEBOOK_API_VERSION
 
 async def get_facebook_client() -> AsyncClient:
