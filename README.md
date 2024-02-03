@@ -45,8 +45,6 @@ The SentiView iCSMS (Social Media Monitoring Part) Backend API is developed usin
 
    ```
 
-   Replace `<mongodb_uri>` with the MongoDB connection URI and `<secret_key>` with a secure secret key for JWT token generation.
-
 2. Update the MongoDB URI in the `app/core/config.py` file if necessary.
 
 ### Run the API
@@ -55,7 +53,7 @@ The SentiView iCSMS (Social Media Monitoring Part) Backend API is developed usin
 uvicorn app.main:app --reload
 ```
 
-The API will be accessible at `http://127.0.0.1:8000`.
+The API will be accessible at `http://127.0.0.1:8000/social-media`.
 
 ## API Documentation
 
