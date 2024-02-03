@@ -1,0 +1,11 @@
+fastapi==0.109.0
+uvicorn==0.27.0.post1
+python-dotenv==1.0.1
+motor==3.3.2  # MongoDB asynchronous driver for FastAPI
+python-jose==3.3.0  # For JWT token handling
+httpx==0.26.0  # HTTP client for asynchronous requests
+httpx_oauthlib==1.0.0  # OAuth support for httpx
+facebook-sdk==3.1.0  # Python wrapper for Facebook Graph API
+pytest==7.4.4  # Testing framework
+pytest-asyncio==0.23.4  # Asyncio support for pytest
+pytest-cov==4.1.0  # Coverage plugin for pytest
