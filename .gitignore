@@ -9,3 +9,6 @@ __pycache__/
 *.db
 *.sqlite
 *.log
+.env
+important.txt
+.env

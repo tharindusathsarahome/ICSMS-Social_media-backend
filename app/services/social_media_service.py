@@ -1,7 +1,7 @@
 # app/services/social_media_service.py
 
 from typing import List
-from app.api.models.social_media import FacebookPostCreate
+from app.models.post_models import FacebookPostCreate
 
 async def process_facebook_posts(posts: List[FacebookPostCreate]) -> List[FacebookPostCreate]:
     """
