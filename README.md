@@ -38,10 +38,16 @@ The SentiView iCSMS (Social Media Monitoring Part) Backend API is developed usin
 1. Create a `.env` file in the project root and configure the following variables:
 
    ```dotenv
+   # MongoDB Configuration
    MONGODB_URI=<mongodb_uri>
    MONGODB_DB=<database_name>
-   PAGE_ID=<page_id>
-   ACCESS_TOKEN=<access_token>
+   
+   # Facebook API Configuration
+   FACEBOOK_APP_ID=<page_id>
+   FACEBOOK_APP_SECRET=<app_secret>
+   
+   # Facebook User Token
+   FACEBOOK_USER_TOKEN=<user_access_token>
 
    ```
 
