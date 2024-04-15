@@ -1,6 +1,6 @@
 # app/routers/social_media.py
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pymongo.mongo_client import MongoClient
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
@@ -9,14 +9,15 @@ from fastapi.encoders import jsonable_encoder
 from facebook import GraphAPI
 
 from app.db.connection import get_database
-from app.db.schema_update_sample import list_posts
+from app.db.schema_update_sample import list_posts, get_keyword_alerts
 from app.models.post_models import FacebookPost, CommentsOfPosts, SubComments
 from app.dependencies.facebook_authentication import authenticate_with_facebook
+import json
 
 router = APIRouter()
 
 
-@router.post("/store_posts", response_model=dict)
+@router.get("/store_posts", response_model=dict)
 async def store_posts(
     db: MongoClient = Depends(get_database),
     graph: GraphAPI = Depends(authenticate_with_facebook),
@@ -55,8 +56,7 @@ async def store_posts(
                 post_model.comments.append(comment_model)
 
             post_dict = post_model.model_dump()
-            criteria = {"id": post_dict['id']}
-            db["posts_collection"].update_one(criteria, {"$set": post_dict}, upsert=True)
+            db["posts_collection"].update_one({"id": post_dict['id']}, {"$set": post_dict}, upsert=True)
 
         return JSONResponse(content={"message": "Success"})
     
@@ -69,9 +69,43 @@ async def get_posts(
     db: MongoClient = Depends(get_database),
 ):
     try:
-        collection = db["posts_collection"]
-        posts = list_posts(collection.find())
+        posts = list_posts(db["posts_collection"].find())
         serialized_posts = jsonable_encoder(posts)
         return JSONResponse(content=serialized_posts)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error[get_posts]: {str(e)}")
+
+
+@router.get("/test_database", response_model=dict)
+async def test_database(
+    db: MongoClient = Depends(get_database),
+):
+    try:
+        db["SocialMedia"].find()
+        return JSONResponse(content={"message": "Database is working fine"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error[test_database]: {str(e)}")
+
+
+@router.get("/execute_mongodb_query")
+async def execute_mongodb_query(
+    query: str = Query(..., title="MongoDB Query"),
+    db: MongoClient = Depends(get_database)
+):
+    try:
+        query_dict = json.loads(query)
+        result = db.command(query_dict)
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+# http://127.0.0.1:8000/execute_mongodb_query?query={"insert":"SocialMedia","documents":[{"sm_id":"SM01","name":"Facebook"},{"sm_id":"SM02","name":"Instagram"}]}
+
+
+@router.get("/get_keyword_alerts_", response_model=dict)
+async def get_keyword_alerts_(
+    db: MongoClient = Depends(get_database),
+):
+    result = get_keyword_alerts(db)
+    serialized_posts = jsonable_encoder(result)
+    return JSONResponse(content=serialized_posts)

@@ -7,8 +7,8 @@ load_dotenv()
 config = Config()
 
 # MongoDB Configuration
-MONGODB_URI = config("MONGODB_URI", default="mongodb://localhost:27017")
-MONGODB_DB = config("MONGODB_DB", default="mydatabase")
+MONGODB_URI = config("MONGODB_URI")
+MONGODB_DB = config("MONGODB_DB")
 
 # Facebook API Configuration
 FACEBOOK_API_VERSION = config("FACEBOOK_API_VERSION", default="19.0")
