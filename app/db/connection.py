@@ -10,7 +10,12 @@ def connect_to_mongo():
     """
 
     global client
-    client = MongoClient(MONGODB_URI, server_api=ServerApi('1'))
+    client = MongoClient(MONGODB_URI)
+    # client = MongoClient(MONGODB_URI,
+    #                     tls=True,
+    #                     tlsCertificateKeyFile='app\db\X509-cert-5527943773821302944.pem',
+    #                     server_api=ServerApi('1'))
+
 
 def get_database():
     """
