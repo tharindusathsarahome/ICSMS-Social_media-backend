@@ -10,6 +10,8 @@ from facebook import GraphAPI
 
 from app.db.connection import get_database
 from app.db.schema_update_sample import list_posts, get_keyword_alerts
+from app.services.sentiment_analysis import analyze_sentiment
+from app.utils.s_analysis_helper import scale_score
 from app.models.post_models import FacebookPost, CommentsOfPosts, SubComments
 from app.dependencies.facebook_authentication import authenticate_with_facebook
 import json
@@ -109,3 +111,16 @@ async def get_keyword_alerts_(
     result = get_keyword_alerts(db)
     serialized_posts = jsonable_encoder(result)
     return JSONResponse(content=serialized_posts)
+
+
+# make this method to get a sentense by query parameter and return the sentiment score
+@router.get("/analyse_sentiments")
+async def analyse_sentiments(
+    sentence: str = Query(..., title="Sentence to be analyzed"),
+):
+    try:
+        sentiment_score = analyze_sentiment(sentence)
+        sentiment_score = scale_score(sentiment_score)
+        return JSONResponse(content={"sentiment_score": sentiment_score})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error[analyse_sentiments]: {str(e)}")
