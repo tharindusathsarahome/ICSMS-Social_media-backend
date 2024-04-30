@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from facebook import GraphAPI
 
 from app.db.connection import get_database
-from app.db.schema_update_sample import list_posts, get_keyword_alerts
+from app.db.schema_update_sample import list_posts, get_keyword_alerts, get_keyword_trend_count
 from app.services.sentiment_analysis import analyze_sentiment
 from app.utils.s_analysis_helper import scale_score
 from app.models.post_models import FacebookPost, CommentsOfPosts, SubComments
@@ -101,19 +101,16 @@ async def execute_mongodb_query(
     except Exception as e:
         return {"error": str(e)}
 
-# http://127.0.0.1:8000/execute_mongodb_query?query={"insert":"SocialMedia","documents":[{"sm_id":"SM01","name":"Facebook"},{"sm_id":"SM02","name":"Instagram"}]}
 
-
-@router.get("/get_keyword_alerts_", response_model=dict)
-async def get_keyword_alerts_(
+@router.get("/keyword_alerts", response_model=dict)
+async def keyword_alerts(
     db: MongoClient = Depends(get_database),
 ):
     result = get_keyword_alerts(db)
-    serialized_posts = jsonable_encoder(result)
+    serialized_posts = jsonable_encoder({0:result})
     return JSONResponse(content=serialized_posts)
 
 
-# make this method to get a sentense by query parameter and return the sentiment score
 @router.get("/analyse_sentiments")
 async def analyse_sentiments(
     sentence: str = Query(..., title="Sentence to be analyzed"),
@@ -124,3 +121,16 @@ async def analyse_sentiments(
         return JSONResponse(content={"sentiment_score": sentiment_score})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error[analyse_sentiments]: {str(e)}")
+
+@router.get("/keyword_trend_count")
+async def keyword_trend_count(
+    db: MongoClient = Depends(get_database),
+    startDate: str = Query(..., title="Start Date"),
+    endDate: str = Query(..., title="End Date")
+):
+    try:
+        result = get_keyword_trend_count(db, startDate, endDate)
+        serialized_posts = jsonable_encoder({0:result})
+        return JSONResponse(content=serialized_posts)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error[keyword_trend_count]: {str(e)}")
