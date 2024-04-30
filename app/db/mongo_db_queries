@@ -1,0 +1,22 @@
+
+// Endpoint Sample Insert Query
+{"insert": "Keywords", "documents": [{"sm_id": "SM01", "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
+
+
+
+// change every String Date to BSON Date
+db.FilteredKeywordsByDate.updateMany(
+    { "date": { "$type": "string" } },
+    [
+        {
+            "$set": {
+                "date": {
+                    "$dateFromString": {
+                        "dateString": "$date",
+                        "format": "%Y-%m-%d"
+                    }
+                }
+            }
+        }
+    ]
+)
