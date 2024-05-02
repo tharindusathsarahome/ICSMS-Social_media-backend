@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from facebook import GraphAPI
 
 from app.db.connection import get_database
-from app.db.schema_update_sample import list_posts, get_keyword_alerts, get_keyword_trend_count
+from app.db.schema_update_sample import list_posts, get_keyword_alerts, get_keyword_trend_count,get_highlighted_coments
 from app.services.sentiment_analysis import analyze_sentiment
 from app.utils.s_analysis_helper import scale_score
 from app.models.post_models import FacebookPost, CommentsOfPosts, SubComments
@@ -106,7 +106,18 @@ async def execute_mongodb_query(
 async def keyword_alerts(
     db: MongoClient = Depends(get_database),
 ):
-    result = get_keyword_alerts(db)
+    result = get_keyword_alerts(db) 
+    serialized_posts = jsonable_encoder(result)
+    return JSONResponse(content=serialized_posts)
+
+
+@router.get("/highlighted_coments", response_model=dict)
+async def highlighted_coments(
+    db: MongoClient = Depends(get_database),
+    startDate: str = Query(..., title="Start Date"),
+    endDate: str = Query(..., title="End Date")
+):
+    result = get_highlighted_coments(db,startDate,endDate)
     serialized_posts = jsonable_encoder({0:result})
     return JSONResponse(content=serialized_posts)
 
