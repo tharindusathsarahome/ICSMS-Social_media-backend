@@ -9,7 +9,11 @@ from fastapi.encoders import jsonable_encoder
 from facebook import GraphAPI
 
 from app.db.connection import get_database
-from app.db.schema_update_sample import list_posts, get_keyword_alerts
+from app.db.schema_update_sample import (
+    list_posts,
+    get_keyword_alerts,
+    get_sentiment_shift,
+)
 from app.services.sentiment_analysis import analyze_sentiment
 from app.utils.s_analysis_helper import scale_score
 from app.models.post_models import FacebookPost, CommentsOfPosts, SubComments
@@ -25,43 +29,51 @@ async def store_posts(
     graph: GraphAPI = Depends(authenticate_with_facebook),
 ):
     try:
-        posts = graph.get_object('me/feed', fields='id,message,created_time,likes.summary(true),comments.summary(true)')
+        posts = graph.get_object(
+            "me/feed",
+            fields="id,message,created_time,likes.summary(true),comments.summary(true)",
+        )
 
-        for post in posts['data']:
+        for post in posts["data"]:
             post_model = FacebookPost(
-                id=post['id'],
-                message=post.get('message', 'No message'),
-                created_time=post['created_time'],
-                likes=post['likes']['summary']['total_count'],
-                comments=[]
+                id=post["id"],
+                message=post.get("message", "No message"),
+                created_time=post["created_time"],
+                likes=post["likes"]["summary"]["total_count"],
+                comments=[],
             )
 
-            comments = graph.get_object(f"{post['id']}/comments", fields='id,message,created_time,likes.summary(true),comments.summary(true)')
+            comments = graph.get_object(
+                f"{post['id']}/comments",
+                fields="id,message,created_time,likes.summary(true),comments.summary(true)",
+            )
 
-            for comment in comments['data']:
+            for comment in comments["data"]:
                 comment_model = CommentsOfPosts(
-                    id=comment['id'],
-                    comment=comment.get('message', 'No message'),
-                    created_time=comment['created_time'],
-                    likes=comment['likes']['summary']['total_count'],
-                    sub_comments=[]
+                    id=comment["id"],
+                    comment=comment.get("message", "No message"),
+                    created_time=comment["created_time"],
+                    likes=comment["likes"]["summary"]["total_count"],
+                    sub_comments=[],
                 )
 
-                for sub_comment in comment['comments']['data']:
+                for sub_comment in comment["comments"]["data"]:
                     sub_comment_model = SubComments(
-                        id=sub_comment['id'],
-                        sub_comment=sub_comment.get('message', 'No message'),
-                        created_time=sub_comment['created_time']
+                        id=sub_comment["id"],
+                        sub_comment=sub_comment.get("message", "No message"),
+                        created_time=sub_comment["created_time"],
                     )
                     comment_model.sub_comments.append(sub_comment_model)
 
                 post_model.comments.append(comment_model)
 
             post_dict = post_model.model_dump()
-            db["posts_collection"].update_one({"id": post_dict['id']}, {"$set": post_dict}, upsert=True)
+            db["posts_collection"].update_one(
+                {"id": post_dict["id"]}, {"$set": post_dict}, upsert=True
+            )
 
         return JSONResponse(content={"message": "Success"})
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error[store_posts]: {str(e)}")
 
@@ -92,7 +104,7 @@ async def test_database(
 @router.get("/execute_mongodb_query")
 async def execute_mongodb_query(
     query: str = Query(..., title="MongoDB Query"),
-    db: MongoClient = Depends(get_database)
+    db: MongoClient = Depends(get_database),
 ):
     try:
         query_dict = json.loads(query)
@@ -100,6 +112,7 @@ async def execute_mongodb_query(
         return result
     except Exception as e:
         return {"error": str(e)}
+
 
 # http://127.0.0.1:8000/execute_mongodb_query?query={"insert":"SocialMedia","documents":[{"sm_id":"SM01","name":"Facebook"},{"sm_id":"SM02","name":"Instagram"}]}
 
@@ -113,6 +126,24 @@ async def get_keyword_alerts_(
     return JSONResponse(content=serialized_posts)
 
 
+# sentiment shif
+
+
+@router.get("/get_sentiment_shift_", response_model=dict)
+async def get_sentiment_shift_(
+    db: MongoClient = Depends(get_database),
+):
+    try:
+        sentiment_shift = get_sentiment_shift(db)
+        serialized_posts = jsonable_encoder({0: sentiment_shift})
+        return JSONResponse(content=serialized_posts)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error[get_sentiment_shift]: {str(e)}"
+        )
+
+
 # make this method to get a sentense by query parameter and return the sentiment score
 @router.get("/analyse_sentiments")
 async def analyse_sentiments(
@@ -123,4 +154,6 @@ async def analyse_sentiments(
         sentiment_score = scale_score(sentiment_score)
         return JSONResponse(content={"sentiment_score": sentiment_score})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error[analyse_sentiments]: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error[analyse_sentiments]: {str(e)}"
+        )
