@@ -23,6 +23,7 @@ class Comment(BaseModel):
     author: Optional[str]
     total_likes: int
     date: datetime
+    comment_url: str
     class Config:
         arbitrary_types_allowed = True
 

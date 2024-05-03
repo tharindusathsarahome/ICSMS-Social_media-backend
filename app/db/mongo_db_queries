@@ -6,13 +6,13 @@
 
 // change every String Date to BSON Date
 db.CommentSentiment.updateMany(
-    { "data_calculated": { "$type": "string" } },
+    { "date_calculated": { "$type": "string" } },
     [
         {
             "$set": {
-                "data_calculated": {
+                "date_calculated": {
                     "$dateFromString": {
-                        "dateString": "$data_calculated",
+                        "dateString": "$date_calculated",
                         "format": "%Y-%m-%d"
                     }
                 }
