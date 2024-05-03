@@ -25,7 +25,9 @@ for keyword in result:
     else:
         keyword_trend_count[keyword_name] = keyword['total_count']
 
-# make 2 lists for keys and values
+# make 2 lists for keys and values of keyword_trend_count
+keys = list(keyword_trend_count.keys())
+values = list(keyword_trend_count.values())
 
 
-print(keyword_trend_count)
+print({"keys": keys, "values": values})

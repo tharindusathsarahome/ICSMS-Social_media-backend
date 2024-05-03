@@ -1,6 +1,6 @@
 
 // Endpoint Sample Insert Query
-{"insert": "Keywords", "documents": [{"sm_id": "SM01", "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
+{"insert": "Keywords", "documents": [{"keyword_id": { "$oid": "5f8f4b3b9b3f3b001f3b3b3b" }, "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
 
 
 

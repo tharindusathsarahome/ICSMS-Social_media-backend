@@ -1,37 +1,8 @@
-from app.models.post_models import FacebookPost, CommentsOfPosts, SubComments
+# from app.models.post_models import FacebookPost, CommentsOfPosts, SubComments
 from bson import ObjectId
 
 from pymongo import MongoClient
 from datetime import datetime
-
-
-def get_sub_comments(comment) -> dict:
-    return SubComments( 
-        id=str(comment['id']),
-        sub_comment=str(comment['sub_comment']),
-        created_time=str(comment['created_time'])
-    )
-
-def get_comments_of_post(comment) -> dict:
-    return CommentsOfPosts( 
-        id=str(comment['id']),
-        comment=str(comment['comment']),
-        created_time=str(comment['created_time']),
-        likes=int(comment['likes']),
-        sub_comments=[get_sub_comments(sub_comment) for sub_comment in comment.get('sub_comments', [])]
-    )
-
-def get_post(post) -> dict:
-    return FacebookPost(
-        id=str(post['id']),
-        message=str(post['message']),
-        created_time=str(post['created_time']),
-        likes=int(post['likes']),
-        comments=[get_comments_of_post(comment) for comment in post.get('comments', [])]
-    )
-
-def list_posts(posts) -> list:
-    return [get_post(post) for post in posts]
 
 
 def get_keyword_alerts(db: MongoClient) -> dict:
@@ -54,20 +25,129 @@ def get_keyword_alerts(db: MongoClient) -> dict:
     
     return keyword_alerts_with_keywords
 
-def get_keyword_trend_count(db: MongoClient, start_date: str, end_date: str):
+
+# Post Collection:
+# _id
+# fb_post_id
+# sm_id
+# title
+# description
+# img_url
+# author
+# total_likes
+# total_comments
+# date
+
+# Comment Collection:
+# _id
+# fb_comment_id
+# post_id
+# description
+# author
+# total_likes
+# date
+
+# SubComment Collection:
+# _id
+# comment_id
+# description
+# author
+# total_likes
+# date
+
+# PostSentiment collection:
+# post_id
+# s_score
+# date_calculated
+
+# CommentSentiment collection:
+# comment_id
+# s_score
+# date_calculated
+
+
+def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
-    result = list( db.FilteredKeywordsByDate.find({ "date": {"$gte": start_datetime, "$lte": end_datetime} }) )
+    total_results = {}
+
+    ############## 0: Keyword Trend Count ##############
+    keyword_by_date = list( db.FilteredKeywordsByDate.find({ "date": {"$gte": start_datetime, "$lte": end_datetime} }) )
 
     keyword_trend_count = {}
-    for keyword in result:
+    for keyword in keyword_by_date:
         keyword_name = db.Keywords.find_one({"_id": ObjectId(keyword['keyword_id']['$oid'])}, {"keyword": 1})['keyword']
+        total_count = keyword['total_count']
 
         if keyword_name in keyword_trend_count:
-            keyword_trend_count[keyword_name] += keyword['total_count']
+            keyword_trend_count[keyword_name] += total_count
         else:
-            keyword_trend_count[keyword_name] = keyword['total_count']
+            keyword_trend_count[keyword_name] = total_count
 
-    return keyword_trend_count
+    total_results['0'] = keyword_trend_count
 
+
+    ############## 1: Get total reactions of posts ##############
+
+    posts_by_date = list( db.Posts.find({ "date": {"$gte": start_datetime, "$lte": end_datetime} }) )
+
+    total_reactions = {}
+    for post in posts_by_date:
+        date = post['date']
+        total_likes = post['total_likes']
+
+        if date in total_reactions:
+            total_reactions[date] += total_likes
+        else:
+            total_reactions[date] = total_likes
+
+    total_results['1'] = total_reactions
+
+
+    ############## 2: Get total comments of posts ##############
+
+    total_comments = {}
+    for post in posts_by_date:
+        date = post['date']
+        total_comments = post['total_comments']
+
+        if date in total_comments:
+            total_comments[date] += total_comments
+        else:
+            total_comments[date] = total_comments
+
+    total_results['2'] = total_comments
+
+
+    ############## 3: Get average sentiment score of posts ##############
+
+    post_sentiments = list( db.PostSentiment.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
+    comment_sentiments = list( db.CommentSentiment.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
+
+    post_sentiment_scores = {}
+    for sentiment in post_sentiments:
+        date = sentiment['date_calculated']
+        s_score = sentiment['s_score']
+
+        if date in post_sentiment_scores:
+            post_sentiment_scores[date].append(s_score)
+        else:
+            post_sentiment_scores[date] = [s_score]
+
+    comment_sentiment_scores = {}
+    for sentiment in comment_sentiments:
+        date = sentiment['date_calculated']
+        s_score = sentiment['s_score']
+
+        if date in comment_sentiment_scores:
+            comment_sentiment_scores[date].append(s_score)
+        else:
+            comment_sentiment_scores[date] = [s_score]
+
+    total_results['3'] = {
+        'post_sentiment_scores': post_sentiment_scores,
+        'comment_sentiment_scores': comment_sentiment_scores
+    }
+
+    return total_results
