@@ -15,7 +15,7 @@ def get_keyword_alerts(db: MongoClient) -> dict:
     keyword_alerts_with_keywords = []
     
     for alert in keyword_alerts:
-        keyword_ids = alert.get('keyword_ids', [])
+        keyword_ids = alert.get("keyword_ids", [])
         object_ids = [ObjectId(id_str) for id_str in keyword_ids]
         
         keywordsAll = list(db.Keyword.find({"_id": {"$in": object_ids}}, { 'keyword': 1 }))
@@ -205,3 +205,21 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
                 
                 if db.SubComment.find_one({"comment_id": db_comment_id, "description": sub_comment['message']}) is None:
                     db.SubComment.insert_one(sub_comment_model.model_dump())
+
+
+# {"insert": "Keywords", "documents": [{"sm_id": "SM01", "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
+# {"insert": "KeywordAlerts", "documents": [{"keyword_ids": ["661b851282246fcaaab579d4"], "author": "Dummy Author 1", "min_val": 20, "max_val": 50, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d5", "661b851282246fcaaab579d4"], "author": "Dummy Author 2", "min_val": 10, "max_val": 30, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d6"], "author": "Dummy Author 3", "min_val": 40, "max_val": 60, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d7"], "author": "Dummy Author 4", "min_val": 5, "max_val": 25, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d8", "661b851282246fcaaab579d6", "661b851282246fcaaab579d7"], "author": "Dummy Author 5", "min_val": 35, "max_val": 70, "alert_type": "Email"}]}
+
+
+# sentiment shift
+def get_sentiment_shift(db: MongoClient) -> list:
+    sentiment_shift_cursor = db.SentimentShifts.find({}, {"_id": 0, "author": 0})
+    sentiment_shift = list(sentiment_shift_cursor)
+    for shift in sentiment_shift:
+        social_media = db.SocialMedia.find_one(
+            {"sm_id": shift["sm_id"]}, {"_id": 0, "name": 1}
+        )
+        shift["platform"] = social_media["name"]
+        shift.pop("sm_id")
+
+    return sentiment_shift
