@@ -11,6 +11,11 @@ from datetime import datetime
 
 from app.db.connection import get_database
 from app.db.schema_update_sample import get_keyword_alerts, get_platform_insights_data, fetch_and_store_facebook_data
+from app.db.schema_update_sample import (
+    list_posts,
+    get_keyword_alerts,
+    get_sentiment_shift,
+)
 from app.services.sentiment_analysis import analyze_sentiment
 from app.utils.s_analysis_helper import scale_score
 from app.dependencies.facebook_authentication import authenticate_with_facebook
@@ -33,7 +38,7 @@ async def test_database(
 @router.get("/execute_mongodb_query")
 async def execute_mongodb_query(
     query: str = Query(..., title="MongoDB Query"),
-    db: MongoClient = Depends(get_database)
+    db: MongoClient = Depends(get_database),
 ):
     try:
         query_dict = json.loads(query)
@@ -42,6 +47,8 @@ async def execute_mongodb_query(
     except Exception as e:
         return {"error": str(e)}
 
+
+# http://127.0.0.1:8000/execute_mongodb_query?query={"insert":"SocialMedia","documents":[{"sm_id":"SM01","name":"Facebook"},{"sm_id":"SM02","name":"Instagram"}]}
 
 @router.get("/keyword_alerts", response_model=dict)
 async def keyword_alerts(
@@ -52,6 +59,23 @@ async def keyword_alerts(
     return JSONResponse(content=serialized_posts)
 
 
+# sentiment shift
+@router.get("/get_sentiment_shift_", response_model=dict)
+async def get_sentiment_shift_(
+    db: MongoClient = Depends(get_database),
+):
+    try:
+        sentiment_shift = get_sentiment_shift(db)
+        serialized_posts = jsonable_encoder({0: sentiment_shift})
+        return JSONResponse(content=serialized_posts)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error[get_sentiment_shift]: {str(e)}"
+        )
+
+
+# make this method to get a sentense by query parameter and return the sentiment score
 @router.get("/analyse_sentiments")
 async def analyse_sentiments(
     sentence: str = Query(..., title="Sentence to be analyzed"),
