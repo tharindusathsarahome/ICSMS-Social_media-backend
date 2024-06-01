@@ -1,3 +1,5 @@
+# app/utils/common.py
+
 def convert_s_score_to_color(sentiment_score):
     """
     Get color between red and green according to the sentiment score.
