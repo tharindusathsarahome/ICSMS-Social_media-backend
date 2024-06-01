@@ -2,8 +2,13 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import handle_posts
-from app.db.connection import connect_to_mongo, close_mongo_connection
+from app.dependencies.mongo_db_authentication import connect_to_mongo, close_mongo_connection
+from app.routers import (
+    handle_facebook, 
+    handle_platform_insights, 
+    handle_settings, 
+    utils,
+)
 
 app = FastAPI()
 
@@ -21,7 +26,10 @@ app.add_middleware(
 )
 
 # Routers
-app.include_router(handle_posts.router, prefix="/social-media", tags=["social_media"])
+app.include_router(handle_facebook.router, prefix="/handle-facebook", tags=["facebook"])
+app.include_router(handle_platform_insights.router, prefix="/platform-insights", tags=["platform-insights"])
+app.include_router(handle_settings.router, prefix="/settings", tags=["settings"])
+app.include_router(utils.router, prefix="/utils", tags=["utils"])
 
 # Events
 app.add_event_handler("startup", connect_to_mongo)
