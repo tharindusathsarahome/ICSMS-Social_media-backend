@@ -1,26 +1,36 @@
-# app/models/social_media.py
-
 from typing import List
 from pydantic import BaseModel
+from typing import Optional
+from bson import ObjectId
+from datetime import datetime
 
-class SubComments(BaseModel):
-    id: str
-    sub_comment: str
-    created_time: str
+class Post(BaseModel):
+    fb_post_id: str
+    description: Optional[str]
+    img_url: Optional[str]
+    author: Optional[str]
+    total_likes: int
+    total_comments: int
+    total_shares: int
+    date: datetime
+    is_popular: bool
+    post_url: str
 
-class CommentsOfPosts(BaseModel):
-    id: str
-    comment: str
-    created_time: str
-    likes: int
-    sub_comments: List[SubComments]
+class Comment(BaseModel):
+    fb_comment_id: str
+    post_id: ObjectId
+    description: str
+    author: Optional[str]
+    total_likes: int
+    date: datetime
+    comment_url: str
+    class Config:
+        arbitrary_types_allowed = True
 
-class FacebookPost(BaseModel):
-    id: str
-    message: str
-    created_time: str
-    likes: int
-    comments: List[CommentsOfPosts]
-
-class FacebookPostsList(BaseModel):
-    items: List[FacebookPost]
+class SubComment(BaseModel):
+    comment_id: ObjectId
+    description: str
+    author: Optional[str]
+    date: datetime
+    class Config:
+        arbitrary_types_allowed = True
