@@ -1,3 +1,5 @@
+# app/services/sentiment_analysis.py
+
 import boto3
 from app.core.config import AWS_KEY_ID, AWS_SECRET_KEY, REGION_NAME
 

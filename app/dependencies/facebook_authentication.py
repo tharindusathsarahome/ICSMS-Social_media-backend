@@ -1,4 +1,4 @@
-# app/dependencies/facebook.py
+# app/dependencies/facebook_authentication.py
 
 from typing import AsyncGenerator, Dict
 from fastapi import Depends, HTTPException

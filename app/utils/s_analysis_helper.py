@@ -1,4 +1,5 @@
-# System-wide helper functions and configurations
+# app/utils/s_analysis_helper.py
+
 import math
 
 def scale_score(score: float, *, scale_type: str="linear") -> float:
