@@ -6,6 +6,7 @@ from app.dependencies.mongo_db_authentication import connect_to_mongo, close_mon
 from app.routers import (
     handle_facebook, 
     handle_platform_insights, 
+    handle_campaign_analysis,
     handle_settings, 
     utils,
 )
@@ -26,10 +27,11 @@ app.add_middleware(
 )
 
 # Routers
-app.include_router(handle_facebook.router, prefix="/handle-facebook", tags=["facebook"])
-app.include_router(handle_platform_insights.router, prefix="/platform-insights", tags=["platform-insights"])
-app.include_router(handle_settings.router, prefix="/settings", tags=["settings"])
-app.include_router(utils.router, prefix="/utils", tags=["utils"])
+app.include_router(handle_facebook.router, prefix="/social-media/handle-facebook", tags=["facebook"])
+app.include_router(handle_platform_insights.router, prefix="/social-media/platform-insights", tags=["platform-insights"])
+app.include_router(handle_campaign_analysis.router, prefix="/social-media/campaign-analysis", tags=["campaign-analysis"])
+app.include_router(handle_settings.router, prefix="/social-media/settings", tags=["settings"])
+app.include_router(utils.router, prefix="/social-media/utils", tags=["utils"])
 
 # Events
 app.add_event_handler("startup", connect_to_mongo)
