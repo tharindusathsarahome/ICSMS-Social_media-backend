@@ -34,3 +34,31 @@ class SubComment(BaseModel):
     date: datetime
     class Config:
         arbitrary_types_allowed = True
+
+class CommentSentiment(BaseModel):
+    comment_id: ObjectId
+    s_score: float
+    date_calculated: datetime
+    class Config:
+        arbitrary_types_allowed = True
+
+class SubCommentSentiment(BaseModel):
+    sub_comment_id: ObjectId
+    s_score: float
+    date_calculated: datetime
+    class Config:
+        arbitrary_types_allowed = True
+
+class Campaign(BaseModel):
+    post_id: ObjectId
+    s_score_arr: List[float]
+    class Config:
+        arbitrary_types_allowed = True
+
+class PostOverviewByDate(BaseModel):
+    post_id: ObjectId
+    date: datetime
+    total_likes: int
+    total_comments: int
+    class Config:
+        arbitrary_types_allowed = True
