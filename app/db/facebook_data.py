@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from datetime import datetime
 from facebook import GraphAPI
 
-from app.models.post_models import Post, Comment, SubComment
+from app.models.post_models import Post, Comment, SubComment, Keyword
 from app.utils.common import convert_s_score_to_color
 
 

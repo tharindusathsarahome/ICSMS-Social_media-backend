@@ -8,6 +8,7 @@ from app.routers import (
     handle_platform_insights, 
     handle_settings, 
     utils,
+    handle_campaign_analysis,
 )
 
 app = FastAPI()
@@ -30,6 +31,7 @@ app.include_router(handle_facebook.router, prefix="/handle-facebook", tags=["fac
 app.include_router(handle_platform_insights.router, prefix="/platform-insights", tags=["platform-insights"])
 app.include_router(handle_settings.router, prefix="/settings", tags=["settings"])
 app.include_router(utils.router, prefix="/utils", tags=["utils"])
+app.include_router(handle_campaign_analysis.router, prefix="/campaign-analysis", tags=["campaign-analysis"])
 
 # Events
 app.add_event_handler("startup", connect_to_mongo)
