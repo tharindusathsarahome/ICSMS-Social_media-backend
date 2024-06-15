@@ -81,6 +81,29 @@ def get_campaign_analysis_details(db: MongoClient) -> dict:
 
     return dict(campaigns_analysis_by_sm)
 
+
+def delete_campaign_from_db(campaign_id: str, db: MongoClient) -> dict:
+    campaign_collection = db.Campaign
+    posts_collection = db.Post
+
+    campaign = campaign_collection.find_one({"campaign_id": campaign_id})
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    post_id = campaign.get("post_id")
+
+    campaign_result = campaign_collection.delete_one({"campaign_id": campaign_id})
+    if campaign_result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Failed to delete the campaign")
+
+    post_result = posts_collection.delete_one({"post_id": post_id})
+
+    return {
+        "status": "success",
+        "message": f"Campaign deleted successfully. Related post deleted: {post_result.deleted_count > 0}"
+    }
+    
+
 def get_filtered_keywords_by_date(db: MongoClient, start_date: datetime, end_date: datetime) -> List[dict]:
     filtered_keywords_collection = db.FilteredKeywordsByDate
     pipeline = [
@@ -116,24 +139,3 @@ def get_filtered_keywords_by_date(db: MongoClient, start_date: datetime, end_dat
     ]
     filtered_keywords = list(filtered_keywords_collection.aggregate(pipeline))
     return filtered_keywords
-
-def delete_campaign_from_db(campaign_id: str, db: MongoClient) -> dict:
-    campaign_collection = db.Campaign
-    posts_collection = db.Post
-
-    campaign = campaign_collection.find_one({"campaign_id": campaign_id})
-    if campaign is None:
-        raise HTTPException(status_code=404, detail="Campaign not found")
-
-    post_id = campaign.get("post_id")
-
-    campaign_result = campaign_collection.delete_one({"campaign_id": campaign_id})
-    if campaign_result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Failed to delete the campaign")
-
-    post_result = posts_collection.delete_one({"post_id": post_id})
-
-    return {
-        "status": "success",
-        "message": f"Campaign deleted successfully. Related post deleted: {post_result.deleted_count > 0}"
-    }

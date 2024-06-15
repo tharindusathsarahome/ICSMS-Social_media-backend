@@ -37,6 +37,10 @@ async def campaign_analysis_details_endpoint(
     serialized_data = jsonable_encoder(result)
     return JSONResponse(content=serialized_data)
 
+@router.delete("/campaigns/{campaign_id}", response_model=dict)
+def delete_campaign(campaign_id: str, db: MongoClient = Depends(get_database)):
+    return delete_campaign_from_db(campaign_id, db)
+
 @router.get("/filtered_keywords_by_date", response_model=List[FilteredKeywordsByDate])
 async def filtered_keywords_by_date(
     start_date: datetime = Query(..., description="Start date for filtering keywords"),
@@ -47,6 +51,3 @@ async def filtered_keywords_by_date(
     return JSONResponse(content=result)
 
 
-@router.delete("/campaigns/{campaign_id}", response_model=dict)
-def delete_campaign(campaign_id: str, db: MongoClient = Depends(get_database)):
-    return delete_campaign_from_db(campaign_id, db)

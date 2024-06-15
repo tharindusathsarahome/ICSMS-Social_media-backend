@@ -4,6 +4,8 @@ from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 from facebook import GraphAPI
+from typing import List, Dict
+
 
 from app.models.post_models import Post, Comment, SubComment, Keyword
 from app.utils.common import convert_s_score_to_color
@@ -73,3 +75,25 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
 
 # {"insert": "Keywords", "documents": [{"sm_id": "SM01", "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
 # {"insert": "KeywordAlerts", "documents": [{"keyword_ids": ["661b851282246fcaaab579d4"], "author": "Dummy Author 1", "min_val": 20, "max_val": 50, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d5", "661b851282246fcaaab579d4"], "author": "Dummy Author 2", "min_val": 10, "max_val": 30, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d6"], "author": "Dummy Author 3", "min_val": 40, "max_val": 60, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d7"], "author": "Dummy Author 4", "min_val": 5, "max_val": 25, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d8", "661b851282246fcaaab579d6", "661b851282246fcaaab579d7"], "author": "Dummy Author 5", "min_val": 35, "max_val": 70, "alert_type": "Email"}]}
+
+def get_unread_comments(db: MongoClient) -> List[Dict]:
+    comments_collection = db.Comment
+    unread_comments = comments_collection.find({"s_score": {"$exists": False}})
+    return list(unread_comments)
+
+def get_unread_subcomments(db: MongoClient) -> List[Dict]:
+    subcomments_collection = db.SubComment
+    unread_subcomments = subcomments_collection.find({"s_score": {"$exists": False}})
+    return list(unread_subcomments)
+
+def update_comment_sentiment(db: MongoClient, comment_id: str, score: float):
+    comments_collection = db.Comment
+    comments_collection.update_one({"fb_comment_id": comment_id}, {"$set": {"s_score": score}})
+    sentiment_comment_collection = db.sentimentcomments
+    sentiment_comment_collection.insert_one({"fb_comment_id": comment_id, "s_score": score})
+
+def update_subcomment_sentiment(db: MongoClient, subcomment_id: str, score: float):
+    subcomments_collection = db.SubComment
+    subcomments_collection.update_one({"comment_id": subcomment_id}, {"$set": {"s_score": score}})
+    sentiment_subcomment_collection = db.sentimentsubcomment
+    sentiment_subcomment_collection.insert_one({"comment_id": subcomment_id, "s_score": score})
