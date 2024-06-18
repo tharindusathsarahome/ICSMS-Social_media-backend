@@ -15,17 +15,17 @@ import json
 router = APIRouter()
 
 
-@router.get("/test_database", response_model=dict)
-async def test_database(
-    db: MongoClient = Depends(get_database),
+@router.get("/test_database")
+async def test_database_connection(
+    db: MongoClient = Depends(get_database)
 ):
     try:
-        db["SocialMedia"].find()
-        return JSONResponse(content={"message": "Database is working fine"})
+        db.server_info()
+        return {"status": "Connection successful"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error[test_database]: {str(e)}")
-
-
+        return {"error": str(e)}
+    
+    
 @router.get("/analyse_sentiments")
 async def analyse_sentiments(
     sentence: str = Query(..., title="Sentence to be analyzed"),
