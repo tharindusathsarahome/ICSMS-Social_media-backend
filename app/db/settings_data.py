@@ -7,6 +7,7 @@ from datetime import datetime
 from app.models.post_models import Post, Comment, SubComment
 from app.utils.common import convert_s_score_to_color
 
+
 def get_keyword_alerts(db: MongoClient) -> dict:
     keyword_alerts_cursor = db.KeywordAlert.find({}, {'_id':0})
     keyword_alerts = list(keyword_alerts_cursor)

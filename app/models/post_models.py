@@ -6,6 +6,7 @@ from datetime import datetime
 
 class Post(BaseModel):
     fb_post_id: str
+    sm_id: str
     description: Optional[str]
     img_url: Optional[str]
     author: Optional[str]
