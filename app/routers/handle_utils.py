@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
 from app.dependencies.mongo_db_authentication import get_database
-from app.services.sentiment_analysis import analyze_sentiment
+from app.services.sentiment_analysis_service import analyze_sentiment
 from app.utils.s_analysis_helper import scale_score
 import json
 

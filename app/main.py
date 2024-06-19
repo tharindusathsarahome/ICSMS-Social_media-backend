@@ -9,6 +9,7 @@ from app.routers import (
     handle_campaign_analysis,
     handle_settings, 
     handle_utils,
+    handle_products_keywords,
 )
 
 app = FastAPI()
@@ -32,6 +33,7 @@ app.include_router(handle_platform_insights.router, prefix="/social-media/platfo
 app.include_router(handle_campaign_analysis.router, prefix="/social-media/campaign-analysis", tags=["campaign-analysis"])
 app.include_router(handle_settings.router, prefix="/social-media/settings", tags=["settings"])
 app.include_router(handle_utils.router, prefix="/social-media/utils", tags=["utils"])
+app.include_router(handle_products_keywords.router, prefix="/social-media/products-keywords", tags=["products-keywords"])
 
 # Events
 app.add_event_handler("startup", connect_to_mongo)
