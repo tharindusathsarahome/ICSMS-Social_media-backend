@@ -41,3 +41,4 @@ def response_to_score(response: dict) -> float:
 
     sentiment_score = positive - negative   # = (+1 * positive) + (-1 * negative)
     return sentiment_score
+

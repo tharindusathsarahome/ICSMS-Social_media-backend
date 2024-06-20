@@ -10,6 +10,7 @@ from app.routers import (
     handle_settings, 
     handle_utils,
     handle_products_keywords,
+    handle_campaign_analysis,
 )
 
 app = FastAPI()
