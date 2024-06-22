@@ -122,3 +122,7 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
 
     return total_results
 
+
+
+
+# ------------------ CRON TASKS ------------------

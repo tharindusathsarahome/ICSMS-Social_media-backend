@@ -3,7 +3,7 @@ from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 from collections import defaultdict
-from app.models.product_models import CustomProducts, IdentifiedProducts
+from app.models.product_keyword_models import CustomProducts, IdentifiedProducts
 from app.services.products_keywords_service import identify_products
 from fastapi import HTTPException
 
@@ -23,6 +23,21 @@ def get_custom_products(db: MongoClient) -> List[str]:
         products.append(product["product"])
 
     return products
+
+
+def get_identified_products(db: MongoClient) -> List[dict]:
+    identified_products = db.IdentifiedProducts.find({}, {"_id": 0, "identified_product": 1})
+
+    products = []
+    for product in identified_products:
+        products.append(product["identified_product"])
+
+    return products
+
+    
+
+    
+# ------------------ CRON TASKS ------------------
 
 
 def add_identified_products(db: MongoClient):
@@ -53,14 +68,3 @@ def add_identified_products(db: MongoClient):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-def get_identified_products(db: MongoClient) -> List[dict]:
-    identified_products = db.IdentifiedProducts.find({}, {"_id": 0, "identified_product": 1})
-
-    products = []
-    for product in identified_products:
-        products.append(product["identified_product"])
-
-    return products
-
-    

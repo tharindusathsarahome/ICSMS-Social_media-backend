@@ -5,6 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 from bson import ObjectId
 
+
 class Post(BaseModel):
     fb_post_id: str
     sm_id: str
@@ -39,6 +40,7 @@ class SubComment(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+
 class CommentSentiment(BaseModel):
     comment_id: ObjectId
     s_score: float
@@ -53,44 +55,11 @@ class SubCommentSentiment(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-class Campaign(BaseModel):
-    post_id: ObjectId
-    s_score_arr: List[float]
-    class Config:
-        arbitrary_types_allowed = True
 
 class PostOverviewByDate(BaseModel):
     post_id: ObjectId
     date: datetime
     total_likes: int
     total_comments: int
-    class Config:
-        arbitrary_types_allowed = True
-
-class Campaign(BaseModel):
-    id: str
-    title: str
-    company: str
-    overall_sentiment: str
-    min: str
-    max: str
-    posts: List[Post]
-    class Config:
-        arbitrary_types_allowed = True
-
-class Keyword(BaseModel):
-    keyword_id: str
-    SocialMedia_sm_id: Optional[str] = None
-    author: Optional[str] = None
-    keyword: str
-    class Config:
-        arbitrary_types_allowed = True
-
-class FilteredKeywordsByDate(BaseModel):
-    Keywords_keyword_id: str
-    date: datetime
-    total_count: int
-    keyword: str
-    author: str
     class Config:
         arbitrary_types_allowed = True

@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime
 from pymongo import MongoClient
 from fastapi import HTTPException
-from app.models.post_models import FilteredKeywordsByDate
+from app.models.product_keyword_models import FilteredKeywordsByDate
 from app.db.campaign_analysis_data import get_filtered_keywords_by_date
 
 async def fetch_filtered_keywords_by_date(db: MongoClient, start_date: datetime, end_date: datetime) -> List[FilteredKeywordsByDate]:

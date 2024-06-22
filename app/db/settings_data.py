@@ -40,3 +40,7 @@ def get_sentiment_shift(db: MongoClient) -> list:
         shift.pop("sm_id")
 
     return {0: sentiment_shift} if sentiment_shift else {0: []}
+
+
+
+# ------------------ CRON TASKS ------------------
