@@ -39,3 +39,62 @@ def get_sentiment_shift(db: MongoClient) -> list:
         shift.pop("sm_id")
 
     return {0: sentiment_shift} if sentiment_shift else {0: []}
+
+#settings-campaigns
+def add_campaign(db: MongoClient, platform: str, post_title: str, company: str) -> dict:
+    existing_campaign = db.Campaign.find_one({
+        "platform": platform,
+        "post_title": post_title,
+        "company": company
+    })
+    
+    if existing_campaign:
+        raise ValueError("Campaign already exists")
+    
+    new_campaign = {
+        "platform": platform,
+        "post_title": post_title,
+    }
+    
+    db.Campaign.insert_one(new_campaign)
+    return new_campaign
+
+def get_campaign_by_id(db: MongoClient, campaign_id: str) -> dict:
+    campaign = db.Campaign.find_one({"_id": ObjectId(campaign_id)})
+    if not campaign:
+        raise ValueError("Campaign not found")
+    return campaign
+
+def update_campaign(db: MongoClient, campaign_id: str, platform: str, post_title: str, company: str) -> dict:
+    existing_campaign = db.Campaign.find_one({
+        "platform": platform,
+        "post_title": post_title,
+        "company": company,
+        "_id": {"$ne": ObjectId(campaign_id)}
+    })
+    
+    if existing_campaign:
+        raise ValueError("Another campaign with the same details already exists")
+    
+    updated_campaign = {
+        "platform": platform,
+        "post_title": post_title,
+        "company": company
+    }
+    
+    result = db.Campaign.update_one(
+        {"_id": ObjectId(campaign_id)},
+        {"$set": updated_campaign}
+    )
+    
+    if result.matched_count == 0:
+        raise ValueError("Campaign not found or update failed")
+    
+    return db.Campaign.find_one({"_id": ObjectId(campaign_id)})
+
+
+def delete_campaign(db: MongoClient, campaign_id: str) -> bool:
+    result = db.Campaign.delete_one({"_id": ObjectId(campaign_id)})
+    if result.deleted_count == 0:
+        raise ValueError("Campaign not found or deletion failed")
+    return True
