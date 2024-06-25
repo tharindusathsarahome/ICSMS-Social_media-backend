@@ -23,3 +23,9 @@ REGION_NAME = config('region_name')
 
 # Gemini API Configuration
 GEMINI_API_KEY = config('GEMINI_API_KEY')
+
+# Cognito Configuration
+COGNITO_REGION = config('COGNITO_REGION')
+COGNITO_POOL_ID = config('COGNITO_POOL_ID')
+COGNITO_APP_CLIENT_ID = config('COGNITO_APP_CLIENT_ID')
+S3_BUCKET_NAME = config('S3_BUCKET_NAME')

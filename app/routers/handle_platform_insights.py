@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
 from app.dependencies.mongo_db_authentication import get_database
+from app.dependencies.user_authentication import role_required
 from app.db.platform_insights_data import get_platform_insights_data
 import json
 
@@ -15,8 +16,9 @@ router = APIRouter()
 
 
 @router.get("/platform_insights_data")
-async def platform_insights_data(
+async def get_platform_insights_data(
     db: MongoClient = Depends(get_database),
+    current_user=Depends(role_required("User")),
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):

@@ -15,6 +15,15 @@ import json
 router = APIRouter()
 
 
+from app.db.campaign_analysis_data import calculate_post_overview_by_date
+@router.get("/test")
+async def test(
+    db: MongoClient = Depends(get_database)
+):
+    calculate_post_overview_by_date(db)
+    return {"message": "Complete"}
+
+
 @router.get("/test_database")
 async def test_database_connection(
     db: MongoClient = Depends(get_database)

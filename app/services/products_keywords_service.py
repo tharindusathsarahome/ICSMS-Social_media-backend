@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pymongo import MongoClient
-from app.models.product_models import CustomProducts, IdentifiedProducts
+from app.models.product_keyword_models import CustomProducts, IdentifiedProducts
 from app.models.post_models import Post
 from app.services.llm_integration_service import get_gemini_chat, get_gemini_response
 

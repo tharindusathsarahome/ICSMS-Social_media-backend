@@ -4,10 +4,15 @@ from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 from facebook import GraphAPI
+from typing import List, Dict
+
 
 from app.models.post_models import Post, Comment, SubComment
 from app.utils.common import convert_s_score_to_color
+from app.services.sentiment_analysis_service import analyze_sentiment
 
+
+# ------------------ CRON TASKS ------------------
 
 def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
     posts = graph.get_object('me/posts', fields='id,message,created_time,from,likes.summary(true),comments.summary(true),full_picture,shares,permalink_url,is_popular')
@@ -70,6 +75,34 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
                 if db.SubComment.find_one({"comment_id": db_comment_id, "description": sub_comment['message']}) is None:
                     db.SubComment.insert_one(sub_comment_model.model_dump())
 
+    print("Data fetched and stored successfully.")
 
-# {"insert": "Keywords", "documents": [{"sm_id": "SM01", "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
-# {"insert": "KeywordAlerts", "documents": [{"keyword_ids": ["661b851282246fcaaab579d4"], "author": "Dummy Author 1", "min_val": 20, "max_val": 50, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d5", "661b851282246fcaaab579d4"], "author": "Dummy Author 2", "min_val": 10, "max_val": 30, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d6"], "author": "Dummy Author 3", "min_val": 40, "max_val": 60, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d7"], "author": "Dummy Author 4", "min_val": 5, "max_val": 25, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d8", "661b851282246fcaaab579d6", "661b851282246fcaaab579d7"], "author": "Dummy Author 5", "min_val": 35, "max_val": 70, "alert_type": "Email"}]}
+
+
+
+# ------------------ CRON TASKS ------------------
+
+def analyze_and_update_comments(db: MongoClient):
+    unread_comments = db.Comment.find({"s_score": {"$exists": False}})
+
+    for comment in unread_comments:
+        description = comment['description']
+        score = analyze_sentiment(description)
+        db.Comment.update_one({"fb_comment_id": comment['comment_id']}, {"$set": {"s_score": score}})
+        sentiment_comment_collection = db.sentimentcomments
+        sentiment_comment_collection.insert_one({"fb_comment_id": comment['comment_id'], "s_score": score})
+    
+    print("Sentiment analysis for comments completed.")
+
+
+def analyze_and_update_subcomments(db: MongoClient):
+    unread_subcomments = db.SubComment.find({"s_score": {"$exists": False}})
+
+    for subcomment in unread_subcomments:
+        description = subcomment['description']
+        score = analyze_sentiment(description)
+        db.SubComment.update_one({"comment_id": subcomment['comment_id']}, {"$set": {"s_score": score}})
+        sentiment_subcomment_collection = db.sentimentsubcomment
+        sentiment_subcomment_collection.insert_one({"comment_id": subcomment['comment_id'], "s_score": score})
+
+    print("Sentiment analysis for subcomments completed.")

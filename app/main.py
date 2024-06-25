@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.dependencies.mongo_db_authentication import connect_to_mongo, close_mongo_connection
+from app.core.scheduler import start_scheduler
 from app.routers import (
     handle_facebook, 
     handle_platform_insights, 
@@ -10,6 +11,7 @@ from app.routers import (
     handle_settings, 
     handle_utils,
     handle_products_keywords,
+    handle_campaign_analysis,
 )
 
 app = FastAPI()
@@ -36,5 +38,7 @@ app.include_router(handle_utils.router, prefix="/social-media/utils", tags=["uti
 app.include_router(handle_products_keywords.router, prefix="/social-media/products-keywords", tags=["products-keywords"])
 
 # Events
+app.add_event_handler("startup", start_scheduler)
 app.add_event_handler("startup", connect_to_mongo)
+
 app.add_event_handler("shutdown", close_mongo_connection)
