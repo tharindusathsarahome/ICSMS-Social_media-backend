@@ -3,8 +3,8 @@ from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 from collections import defaultdict
-from app.models.product_models import CustomProducts, IdentifiedProducts
-from app.services.products_keywords_service import identify_products
+from app.models.product_models import CustomProducts, IdentifiedProducts,IdentifiedKeywords
+from app.services.products_keywords_service import identify_products,identify_keywords
 from fastapi import HTTPException
 
 
@@ -62,5 +62,39 @@ def get_identified_products(db: MongoClient) -> List[dict]:
         products.append(product["identified_product"])
 
     return products
+
+#adding identified keywords
+
+def add_identified_keywords(db:MongoClient):
+    try:
+        posts = db.Post.find()
+
+        for post in posts:
+            identified_keyword = db.IdentifiedKeywords.find_one({"post_id":post["_id"]})
+            if identified_keyword:
+                continue
+
+            description = post.get("description")
+            if description:
+                identified_keyword_tags = identify_keywords(description,db)
+                if identified_keyword_tags == -1:
+                    continue
+
+                for keyword_tag in identified_keyword_tags:
+                    identified_keyword = IdentifiedKeywords(
+                        sm_id=post["sm_id"],
+                        post_id=post["_id"],
+                        identified_keyword=keyword_tag,
+                        date=datetime.now()
+                    )
+                    db.IdentifiedKeywords.insert_one(identified_keyword.dict())
+                    
+        return {"message": "Identified keyword added successfully."}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))    
+
+
+
 
     

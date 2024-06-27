@@ -14,3 +14,11 @@ class IdentifiedProducts(BaseModel):
     date: datetime
     class Config:
         arbitrary_types_allowed = True
+
+class IdentifiedKeywords(BaseModel):
+    sm_id:str
+    post_id: ObjectId
+    identified_keyword:str
+    date:datetime
+    class Config:
+        arbitrary_types_allowed = True

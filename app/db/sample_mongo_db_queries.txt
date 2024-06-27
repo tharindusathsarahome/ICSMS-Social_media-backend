@@ -5,14 +5,14 @@
 
 
 // change every String Date to BSON Date
-db.CommentSentiment.updateMany(
-    { "date_calculated": { "$type": "string" } },
+db.IdentifiedProducts.updateMany(
+    { "date": { "$type": "string" } },
     [
         {
             "$set": {
-                "date_calculated": {
+                "date": {
                     "$dateFromString": {
-                        "dateString": "$date_calculated",
+                        "dateString": "$date",
                         "format": "%Y-%m-%d"
                     }
                 }
