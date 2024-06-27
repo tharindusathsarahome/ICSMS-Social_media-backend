@@ -98,3 +98,146 @@ def delete_campaign(db: MongoClient, campaign_id: str) -> bool:
     if result.deleted_count == 0:
         raise ValueError("Campaign not found or deletion failed")
     return True
+
+#settings-alerts
+def add_topic_alert(db: MongoClient, topic: str, alert_type: str, min_val: int, max_val: int) -> dict:
+    # Find the topic_id using the topic
+    identified_topic = db.IdentifiedTopics.find_one({"topic": topic}, {"_id": 1})
+    if not identified_topic:
+        raise ValueError("Topic not found")
+    
+    topic_id = str(identified_topic["_id"])
+    
+
+    existing_alert = db.TopicAlert.find_one({
+        "IdentifiedTopics_topic_id": topic_id,
+        "alert_type": alert_type
+    })
+    
+    if existing_alert:
+        raise ValueError("Topic alert with the same topic and alert type already exists")
+    
+
+    new_alert = {
+        "IdentifiedTopics_topic_id": topic_id,
+        "alert_type": alert_type,
+        "min_val": min_val,
+        "max_val": max_val
+    }
+    
+    db.TopicAlert.insert_one(new_alert)
+    return new_alert
+
+def get_topic_alert_by_id(db: MongoClient, alert_id: str) -> dict:
+    alert = db.TopicAlert.find_one({"_id": ObjectId(alert_id)})
+    if not alert:
+        raise ValueError("Topic alert not found")
+    return alert
+
+def update_topic_alert(db: MongoClient, alert_id: str, topic: str, alert_type: str, min_val: int, max_val: int) -> dict:
+    # Find the topic_id using the topic
+    identified_topic = db.IdentifiedTopics.find_one({"topic": topic}, {"_id": 1})
+    if not identified_topic:
+        raise ValueError("Topic not found")
+    
+    topic_id = str(identified_topic["_id"])
+    
+    # Check for existing topic alerts with different IDs
+    existing_alert = db.TopicAlert.find_one({
+        "IdentifiedTopics_topic_id": topic_id,
+        "alert_type": alert_type,
+        "_id": {"$ne": ObjectId(alert_id)}
+    })
+    
+    if existing_alert:
+        raise ValueError("Another topic alert with the same topic and alert type already exists")
+
+    updated_alert = {
+        "IdentifiedTopics_topic_id": topic_id,
+        "alert_type": alert_type,
+        "min_val": min_val,
+        "max_val": max_val
+    }
+    
+    result = db.TopicAlert.update_one(
+        {"_id": ObjectId(alert_id)},
+        {"$set": updated_alert}
+    )
+    
+    if result.matched_count == 0:
+        raise ValueError("Topic alert not found or update failed")
+    
+    return db.TopicAlert.find_one({"_id": ObjectId(alert_id)})
+
+def delete_topic_alert(db: MongoClient, alert_id: str) -> bool:
+    result = db.TopicAlert.delete_one({"_id": ObjectId(alert_id)})
+    if result.deleted_count == 0:
+        raise ValueError("Topic alert not found or deletion failed")
+    return True
+
+#settings-sentiment shift thresholds
+def add_sentiment_shift_threshold(db: MongoClient, sm_id: str, alert_type: str, min_val: int = None, max_val: int = None) -> dict:
+
+    existing_threshold = db.SentimentShift.find_one({
+        "SocialMedia_sm_id": sm_id,
+        "alert_type": alert_type
+    })
+    
+    if existing_threshold:
+        if min_val is None or max_val is None:
+            raise ValueError("Sentiment shift threshold with the same platform and alert type already exists")
+        return existing_threshold
+    
+   
+    new_threshold = {
+        "SocialMedia_sm_id": sm_id,
+        "alert_type": alert_type,
+        "min_val": min_val,
+        "max_val": max_val
+    }
+    
+    db.SentimentShift.insert_one(new_threshold)
+    return new_threshold
+
+def get_sentiment_shift_threshold_by_id(db: MongoClient, threshold_id: str) -> dict:
+    threshold = db.SentimentShift.find_one({"_id": ObjectId(threshold_id)})
+    if not threshold:
+        raise ValueError("Sentiment shift threshold not found")
+    return threshold
+
+
+def update_sentiment_shift_threshold(db: MongoClient, threshold_id: str, sm_id: str, alert_type: str, min_val: int, max_val: int) -> dict:
+    # Check for existing sentiment shift thresholds with different IDs
+    existing_threshold = db.SentimentShift.find_one({
+        "SocialMedia_sm_id": sm_id,
+        "alert_type": alert_type,
+        "_id": {"$ne": ObjectId(threshold_id)}
+    })
+    
+    if existing_threshold:
+        raise ValueError("Another sentiment shift threshold with the same platform and alert type already exists")
+    
+
+    updated_threshold = {
+        "SocialMedia_sm_id": sm_id,
+        "alert_type": alert_type,
+        "min_val": min_val,
+        "max_val": max_val
+    }
+    
+    result = db.SentimentShift.update_one(
+        {"_id": ObjectId(threshold_id)},
+        {"$set": updated_threshold}
+    )
+    
+    if result.matched_count == 0:
+        raise ValueError("Sentiment shift threshold not found or update failed")
+    
+    return db.SentimentShift.find_one({"_id": ObjectId(threshold_id)})
+
+
+def delete_sentiment_shift_threshold(db: MongoClient, threshold_id: str) -> bool:
+    result = db.SentimentShift.delete_one({"_id": ObjectId(threshold_id)})
+    if result.deleted_count == 0:
+        raise ValueError("Sentiment shift threshold not found or deletion failed")
+    return True
