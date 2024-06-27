@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
 from app.dependencies.mongo_db_authentication import get_database
-from app.db.products_keywords_data import add_custom_products, get_custom_products, get_identified_products
+from app.db.products_keywords_data import add_custom_products, get_custom_products, add_identified_products, get_identified_products,add_identified_keywords
 import json
 
 router = APIRouter()
@@ -46,3 +46,16 @@ async def get_identified_products_route(
         return JSONResponse(content=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error[Get Identified Products]: {str(e)}")
+
+
+@router.get("/add_identified_keywords")
+async def add_identify_keywords_route(
+    db:MongoClient = Depends(get_database)
+):
+    try:
+        result = add_identified_keywords(db)
+        return JSONResponse(content=result)
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=f"error[Add identified keywords]:{str(e)}")
+
+

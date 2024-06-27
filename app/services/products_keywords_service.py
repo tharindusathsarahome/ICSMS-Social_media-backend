@@ -44,3 +44,29 @@ def is_potentially_a_product( product_name: str, db: MongoClient ):
         return True
     else:
         return False
+    
+#keyword identification
+
+def identify_keywords(facebook_post_description:str,db:MongoClient):
+
+    chat = get_gemini_chat()
+
+    message = f"This is a facebook Post Description:'{facebook_post_description}.\n Give me a ',' separated String list of Hashtags mentioned in this post. Give the mainly identified Hashtags. And Do not provide anything else."
+
+    response = get_gemini_response(chat,message)
+    # return response.split(',')
+
+    keywords = []
+    for word in response.split(','):
+        keywords.append(word.strip())
+
+    return keywords
+            
+
+    
+
+
+
+
+
+    
