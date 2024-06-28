@@ -44,10 +44,15 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
     result = list(db.IdentifiedKeywords.aggregate(pipeline))
 
     for keyword in result:
-        keyword_trend_count[keyword['identified_keyword']] = keyword['count']
+        word = keyword['identified_keyword']
+        if word[0] == "#":
+            word = word[1:]
+            word = word.title()
+        keyword_trend_count[word] = keyword['count']
+
+    keyword_trend_count = dict(list(keyword_trend_count.items())[:5])
 
     total_results['0'] = keyword_trend_count
-
 
     ############## 1: Get total reactions of posts ##############
 
@@ -96,11 +101,11 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
         if not comment_sentiment:
             return None
 
-        sub_comment_sentiments = list(db.subcommentSentiments.find({"comment_id": comment_id}))
+        # sub_comment_sentiments = list(db.subcommentSentiments.find({"comment_id": comment_id}))
 
         total_sentiment = comment_sentiment['s_score'] * comment_sentiment_threshold
-        for sub_comment_sentiment in sub_comment_sentiments:
-            total_sentiment += sub_comment_sentiment['s_score'] * sub_comment_sentiment_threshold
+        # for sub_comment_sentiment in sub_comment_sentiments:
+        #     total_sentiment += sub_comment_sentiment['s_score'] * sub_comment_sentiment_threshold
 
         s_score = comment_sentiment['s_score']
         

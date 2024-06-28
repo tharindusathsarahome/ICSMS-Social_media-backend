@@ -8,6 +8,7 @@ from pymongo import MongoClient
 from app.models.post_models import PostOverviewByDate
 from app.models.campaign_models import Campaign
 from fastapi import HTTPException
+from app.utils.common import convert_s_score_to_color
 import re
 
 
@@ -104,7 +105,7 @@ def get_campaign_analysis_details(db: MongoClient) -> dict:
         comment_increment = comments_last_7_days - comments_previous_7_14_days
         
         campaign_details.append({
-            "campaign_id": campaign.get("_id"),
+            "campaign_id": str(campaign.get("_id")),
             "total_likes": post_details.get("total_likes"),
             "total_comments": post_details.get("total_comments"),
             "like_increment": like_increment,
@@ -112,8 +113,10 @@ def get_campaign_analysis_details(db: MongoClient) -> dict:
             "company": post_details.get("author"),
             "img_url": post_details.get("img_url"),
             "s_score_arr": campaign.get("s_score_arr"),
+            "color": convert_s_score_to_color(campaign.get("s_score_arr")[-1]),
             "description": post_details.get("description"),
-            "social_media": post_details.get("sm_id")
+            "social_media": post_details.get("sm_id"),
+            "post_url": post_details.get("post_url")
         })
     
     campaigns_analysis_by_sm = defaultdict(list)
