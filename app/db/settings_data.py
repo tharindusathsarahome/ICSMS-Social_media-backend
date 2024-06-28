@@ -50,10 +50,11 @@ def get_campaign_by_id(db: MongoClient, campaign_id: str) -> dict:
 def get_campaigns(db: MongoClient) -> list:
     campaigns = list(db.Campaign.find({}, {"_id": 1, "post_id": 1, "s_score_arr": 1}))
     for campaign in campaigns:
-        post = db.Post.find_one({"_id": campaign["post_id"]}, {"_id": 0, "description": 1, "sm_id": 1})
+        post = db.Post.find_one({"_id": campaign["post_id"]}, {"_id": 0, "description": 1, "sm_id": 1, "author": 1})
         campaign["description"] = post["description"]
         campaign["platform"] = post["sm_id"]
-        campaign["s_score"] = campaign["s_score_arr"][-1]
+        campaign["s_score"] = round((campaign["s_score_arr"][-1] + 1) / 2, 1)
+        campaign["company"] = post["author"]
         campaign["color"] = convert_s_score_to_color(campaign["s_score_arr"][-1])
         campaign["_id"] = str(campaign["_id"])
         campaign.pop("post_id")
@@ -76,7 +77,7 @@ def delete_campaign(db: MongoClient, campaign_id: str) -> dict:
 #settings-alerts
 def add_topic_alert(db: MongoClient, topic: str, alert_type: str, min_val: int, max_val: int) -> dict:
     # Find the topic_id using the topic
-    identified_topic = db.IdentifiedTopics.find_one({"topic": topic}, {"_id": 1})
+    identified_topic = db.IdentifiedProducts.find_one({"identified_product": topic}, {"_id": 1})
     if not identified_topic:
         raise ValueError("Topic not found")
     
@@ -99,18 +100,23 @@ def add_topic_alert(db: MongoClient, topic: str, alert_type: str, min_val: int, 
         "max_val": max_val
     }
     
-    db.TopicAlert.insert_one(new_alert)
-    return new_alert
+    result = db.TopicAlert.insert_one(new_alert)
+    return {"id": str(result.inserted_id)}
 
-def get_topic_alert_by_id(db: MongoClient, alert_id: str) -> dict:
-    alert = db.TopicAlert.find_one({"_id": ObjectId(alert_id)})
-    if not alert:
-        raise ValueError("Topic alert not found")
-    return alert
+def get_all_topic_alerts(db: MongoClient) -> list:
+    topic_alerts = list(db.TopicAlert.find({}, {"_id": 0}))
+    for alert in topic_alerts:
+        topic = db.IdentifiedProducts.find_one(
+            {"_id": ObjectId(alert["IdentifiedTopics_topic_id"])}, {"_id": 0, "identified_product": 1, "sm_id":1}
+        )
+        alert["topic"] = topic["identified_product"]
+        alert["sm_id"] = topic["sm_id"]
+        alert.pop("IdentifiedTopics_topic_id")
+    return topic_alerts
 
 def update_topic_alert(db: MongoClient, alert_id: str, topic: str, alert_type: str, min_val: int, max_val: int) -> dict:
     # Find the topic_id using the topic
-    identified_topic = db.IdentifiedTopics.find_one({"topic": topic}, {"_id": 1})
+    identified_topic = db.IdentifiedProducts.find_one({"identified_product": topic}, {"_id": 1})
     if not identified_topic:
         raise ValueError("Topic not found")
     
@@ -170,8 +176,8 @@ def add_sentiment_shift_threshold(db: MongoClient, sm_id: str, alert_type: str, 
         "max_val": max_val
     }
     
-    db.SentimentShift.insert_one(new_threshold)
-    return new_threshold
+    result = db.SentimentShift.insert_one(new_threshold)
+    return {"id": str(result.inserted_id)}
 
 def get_sentiment_shift_threshold_by_id(db: MongoClient, threshold_id: str) -> dict:
     threshold = db.SentimentShift.find_one({"_id": ObjectId(threshold_id)})

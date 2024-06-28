@@ -8,13 +8,10 @@ from app.models.post_models import Post, Comment, SubComment
 from app.utils.common import convert_s_score_to_color
 
 
-def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
+def keyword_trend_count(db: MongoClient, start_date: str, end_date: str):
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
-    total_results = {}
-
-    ############## 0: Keyword Trend Count ##############
     keyword_trend_count = {}
 
     pipeline = [
@@ -40,7 +37,7 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
             }
         }
     ]
-    
+
     result = list(db.IdentifiedKeywords.aggregate(pipeline))
 
     for keyword in result:
@@ -52,9 +49,12 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
 
     keyword_trend_count = dict(list(keyword_trend_count.items())[:5])
 
-    total_results['0'] = keyword_trend_count
+    return keyword_trend_count
 
-    ############## 1: Get total reactions of posts ##############
+
+def total_reactions(db: MongoClient, start_date: str, end_date: str):
+    start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+    end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
     posts_by_date = list( db.Post.find({ "date": {"$gte": start_datetime, "$lte": end_datetime} }) )
 
@@ -68,10 +68,14 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
         else:
             total_reactions[date] = total_likes
 
-    total_results['1'] = total_reactions
+    return total_reactions
 
 
-    ############## 2: Get total comments of posts ##############
+def total_comments(db: MongoClient, start_date: str, end_date: str):
+    start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+    end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+
+    posts_by_date = list( db.Post.find({ "date": {"$gte": start_datetime, "$lte": end_datetime} }) )
 
     total_comments = {}
     for post in posts_by_date:
@@ -83,11 +87,13 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
         else:
             total_comments[date] = comments_count
 
-    total_results['2'] = total_comments
+    return total_comments
 
 
-    ############## 3: Get Highlighted comments ##############
-    
+def highlighted_comments(db: MongoClient, start_date: str, end_date: str):
+    start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+    end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+
     highlighted_comments = []
     comment_sentiment_threshold = 0.7
     sub_comment_sentiment_threshold = 0.3
@@ -127,12 +133,13 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
     highlighted_comments.extend(comments_with_sentiment[:5])
     highlighted_comments.extend(comments_with_sentiment[-5:])
 
+    return highlighted_comments
 
-    total_results['3'] = highlighted_comments
 
-
-    ############## 4: Get average sentiment score of comments and reacts ##############
-
+def average_sentiment_score(db: MongoClient, start_date: str, end_date: str):
+    start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+    end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+    
     comment_sentiments = list( db.commentSentiments.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
     subcomment_sentiments = list( db.subcommentSentiments.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
 
@@ -156,14 +163,10 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
         else:
             subcomment_sentiment_scores[date] = s_score
 
-    total_results['4'] = {
+    return {
         "comments": comment_sentiment_scores,
         "subcomments": subcomment_sentiment_scores
     }
-
-    return total_results
-
-
 
 
 # ------------------ CRON TASKS ------------------

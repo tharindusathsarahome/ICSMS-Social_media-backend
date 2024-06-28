@@ -16,7 +16,7 @@ from app.db.settings_data import (
     get_campaign_by_id, 
     delete_campaign, 
     add_topic_alert, 
-    get_topic_alert_by_id, 
+    get_all_topic_alerts, 
     update_topic_alert, 
     delete_topic_alert, 
     add_sentiment_shift_threshold, 
@@ -108,20 +108,18 @@ async def add_topic_alert_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error[add_topic_alert]: {str(e)}")
     
-@router.get("/topic_alert/{alert_id}", response_model=dict)
-async def get_topic_alert_endpoint(
-    alert_id: str = Path(..., description="The ID of the topic alert to retrieve"),
+@router.get("/topic_alerts", response_model=dict)
+async def get_all_topic_alerts_endpoint(
     db: MongoClient = Depends(get_database)
 ):
     try:
-        alert = get_topic_alert_by_id(db, alert_id)
-        serialized_alert = jsonable_encoder(alert)
-        return JSONResponse(content=serialized_alert)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        alerts = get_all_topic_alerts(db)
+        serialized_alerts = jsonable_encoder(alerts)
+        return JSONResponse(content=serialized_alerts)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error[get_topic_alert_by_id]: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error[get_all_topic_alerts]: {str(e)}")
     
+
 @router.put("/topic_alert/{alert_id}", response_model=dict)
 async def update_topic_alert_endpoint(
     alert_id: str = Path(..., description="The ID of the topic alert to update"),
