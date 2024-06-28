@@ -6,9 +6,10 @@ from pymongo.mongo_client import MongoClient
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from datetime import datetime
 
 from app.dependencies.mongo_db_authentication import get_database
-from app.db.products_keywords_data import add_custom_products, get_custom_products, add_identified_products, get_identified_products,add_identified_keywords
+from app.db.products_keywords_data import add_custom_products, get_custom_products, get_identified_products, get_identified_products_by_date
 import json
 
 router = APIRouter()
@@ -48,14 +49,14 @@ async def get_identified_products_route(
         raise HTTPException(status_code=500, detail=f"Error[Get Identified Products]: {str(e)}")
 
 
-@router.get("/add_identified_keywords")
-async def add_identify_keywords_route(
-    db:MongoClient = Depends(get_database)
+@router.get("/identified_products_by_date")
+async def get_identified_products_by_date_route(
+    start_date: datetime = Query(..., title="Start Date"),
+    end_date: datetime = Query(..., title="End Date"),
+    db: MongoClient = Depends(get_database)
 ):
     try:
-        result = add_identified_keywords(db)
+        result = get_identified_products_by_date(db, start_date, end_date)
         return JSONResponse(content=result)
     except Exception as e:
-        raise HTTPException(status_code=500,detail=f"error[Add identified keywords]:{str(e)}")
-
-
+        raise HTTPException(status_code=500, detail=f"Error[Get Identified Products By Date]: {str(e)}")

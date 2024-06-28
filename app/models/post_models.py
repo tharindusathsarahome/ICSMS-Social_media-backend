@@ -21,7 +21,7 @@ class Post(BaseModel):
 
 class Comment(BaseModel):
     fb_comment_id: str
-    post_id: str  # Changed from ObjectId for simplicity
+    post_id: ObjectId
     description: str
     author: Optional[str] = None
     total_likes: int
@@ -32,7 +32,7 @@ class Comment(BaseModel):
         arbitrary_types_allowed = True
 
 class SubComment(BaseModel):
-    comment_id: str  # Changed from ObjectId for simplicity
+    comment_id: ObjectId
     description: str
     author: Optional[str] = None
     date: datetime

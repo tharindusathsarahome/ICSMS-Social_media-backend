@@ -15,17 +15,36 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
     total_results = {}
 
     ############## 0: Keyword Trend Count ##############
-    keyword_by_date = list( db.FilteredKeywordsByDate.find({ "date": {"$gte": start_datetime, "$lte": end_datetime} }) )
-
     keyword_trend_count = {}
-    for keyword in keyword_by_date:
-        keyword_name = db.Keyword.find_one({"_id": ObjectId(keyword['keyword_id']['$oid'])}, {"keyword": 1})['keyword']
-        total_count = keyword['total_count']
 
-        if keyword_name in keyword_trend_count:
-            keyword_trend_count[keyword_name] += total_count
-        else:
-            keyword_trend_count[keyword_name] = total_count
+    pipeline = [
+        {
+            "$match": {
+                "date": {"$gte": start_datetime, "$lte": end_datetime}
+            }
+        },
+        {
+            "$group": {
+                "_id": "$identified_keyword",  
+                "count": {"$sum": 1}  
+            }
+        },
+        {
+            "$sort": {"count": -1}  
+        },
+        {
+            "$project": {
+                "_id": 0,  
+                "identified_keyword": "$_id",
+                "count": 1
+            }
+        }
+    ]
+    
+    result = list(db.IdentifiedKeywords.aggregate(pipeline))
+
+    for keyword in result:
+        keyword_trend_count[keyword['identified_keyword']] = keyword['count']
 
     total_results['0'] = keyword_trend_count
 
@@ -65,45 +84,52 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
     ############## 3: Get Highlighted comments ##############
     
     highlighted_comments = []
+    comment_sentiment_threshold = 0.7
+    sub_comment_sentiment_threshold = 0.3
 
-    comment_sentiments = list(db.CommentSentiment.find({
-        "date_calculated": {"$gte": start_datetime, "$lte": end_datetime}
-    }))
+    comment_sentiments = list(db.commentSentiments.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }))
 
-    comment_ids = [comment["comment_id"]["$oid"] for comment in comment_sentiments]
-    object_ids = [ObjectId(id_str) for id_str in comment_ids]
+    comments_with_sentiment = []
+    for sentiment in comment_sentiments:
+        comment_id = sentiment['comment_id']
+        comment_sentiment = db.commentSentiments.find_one({"comment_id": comment_id})
+        if not comment_sentiment:
+            return None
 
-    comments = list(db.Comment.find({"_id": {"$in": object_ids}}))
+        sub_comment_sentiments = list(db.subcommentSentiments.find({"comment_id": comment_id}))
 
-    for comment in comments:
-        sentiment = next((s for s in comment_sentiments if ObjectId(s["comment_id"]["$oid"]) == comment["_id"]), None)
-        if sentiment and (sentiment["s_score"] > 0.7 or sentiment["s_score"] < -0.7):
-            highlighted_comments.append({
+        total_sentiment = comment_sentiment['s_score'] * comment_sentiment_threshold
+        for sub_comment_sentiment in sub_comment_sentiments:
+            total_sentiment += sub_comment_sentiment['s_score'] * sub_comment_sentiment_threshold
+
+        s_score = comment_sentiment['s_score']
+        
+        if total_sentiment is not None:
+            comment = db.Comment.find_one({"_id": sentiment['comment_id']})
+            comments_with_sentiment.append({
+                "comment_id": str(sentiment['comment_id']),
+                "total_sentiment": total_sentiment,
                 "description": comment.get("description", ""),
                 "author": comment.get("author", ""),
                 "date": comment["date"].strftime("%Y-%m-%d"),
                 "comment_url": comment["comment_url"],
-                "s_score": sentiment["s_score"],
-                "color": convert_s_score_to_color(sentiment["s_score"])
+                "s_score": s_score,
+                "color": convert_s_score_to_color(s_score)
             })
+
+    comments_with_sentiment.sort(key=lambda x: x['total_sentiment'], reverse=True)
+
+    highlighted_comments.extend(comments_with_sentiment[:5])
+    highlighted_comments.extend(comments_with_sentiment[-5:])
+
 
     total_results['3'] = highlighted_comments
 
 
     ############## 4: Get average sentiment score of comments and reacts ##############
 
-    post_sentiments = list( db.PostSentiment.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
-    comment_sentiments = list( db.CommentSentiment.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
-
-    post_sentiment_scores = {}
-    for sentiment in post_sentiments:
-        date = sentiment['date_calculated'].strftime("%Y-%m-%d")
-        s_score = sentiment['s_score']
-
-        if date in post_sentiment_scores:
-            post_sentiment_scores[date] += s_score
-        else:
-            post_sentiment_scores[date] = s_score
+    comment_sentiments = list( db.commentSentiments.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
+    subcomment_sentiments = list( db.subcommentSentiments.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime} }) )
 
     comment_sentiment_scores = {}
     for sentiment in comment_sentiments:
@@ -115,9 +141,19 @@ def get_platform_insights_data(db: MongoClient, start_date: str, end_date: str):
         else:
             comment_sentiment_scores[date] = s_score
 
+    subcomment_sentiment_scores = {}
+    for sentiment in subcomment_sentiments:
+        date = sentiment['date_calculated'].strftime("%Y-%m-%d")
+        s_score = sentiment['s_score']
+
+        if date in subcomment_sentiment_scores:
+            subcomment_sentiment_scores[date] += s_score
+        else:
+            subcomment_sentiment_scores[date] = s_score
+
     total_results['4'] = {
-        'post_sentiment_scores': post_sentiment_scores,
-        'comment_sentiment_scores': comment_sentiment_scores
+        "comments": comment_sentiment_scores,
+        "subcomments": subcomment_sentiment_scores
     }
 
     return total_results

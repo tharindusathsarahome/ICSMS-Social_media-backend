@@ -3,7 +3,7 @@
 import json
 from datetime import datetime
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from fastapi.responses import JSONResponse
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.responses import JSONResponse
@@ -12,60 +12,35 @@ from pymongo.mongo_client import MongoClient
 
 from app.models.product_keyword_models import FilteredKeywordsByDate
 from app.dependencies.mongo_db_authentication import get_database
-from app.services.social_media_service import fetch_filtered_keywords_by_date
 from app.db.campaign_analysis_data import (
-    create_campaign,
-    get_created_campaign,
-    get_campaign_analysis_details,
-    delete_campaign
+    check_adding_campaign,
+    get_campaign_analysis_details
     )
 
 
 router = APIRouter()
 
 
-@router.post("/create-campaign", response_description="Create a campaign", response_model=str)
-async def create_campaign(
-    db: MongoClient = Depends(get_database),
-    post_id: str = Query(..., description="The post id"),
+@router.post("/create-campaign", response_model=dict)
+async def new_campaign(
+    platform: str = Body(...),
+    post_description_part: str = Body(...),
+    db: MongoClient = Depends(get_database)
 ):
-    campaign = create_campaign(db, post_id)
-    return JSONResponse(content=json.dumps(campaign), status_code=200)
-
-
-@router.get("/created_campaigns", response_model=dict)
-async def get_created_campaign(
-    db: MongoClient = Depends(get_database),
-):
-    result = get_created_campaign(db)
-    serialized_posts = jsonable_encoder(result)
-    return JSONResponse(content=serialized_posts, status_code=200)
+    try:
+        new_campaign = check_adding_campaign(db, platform, post_description_part)
+        serialized_campaign = jsonable_encoder(new_campaign)
+        return JSONResponse(content=serialized_campaign)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error[add_campaign]: {str(e)}")
 
 
 @router.get("/campaign_analysis_details", response_model=dict)
-async def get_campaign_analysis_details(
+async def campaign_analysis_details(
     db: MongoClient = Depends(get_database),
 ):
     result = get_campaign_analysis_details(db)
     serialized_data = jsonable_encoder(result)
     return JSONResponse(content=serialized_data, status_code=200)
-
-
-@router.delete("/campaigns/{campaign_id}", response_model=dict)
-async def delete_campaign(
-    campaign_id: str,
-    db: MongoClient = Depends(get_database)
-):
-    result = delete_campaign(campaign_id, db)
-    serialized_posts = jsonable_encoder(result)
-    return JSONResponse(content=serialized_posts, status_code=200)
-
-
-@router.get("/filtered_keywords_by_date", response_model=List[FilteredKeywordsByDate])
-async def get_filtered_keywords_by_date(
-    start_date: datetime = Query(..., description="Start date for filtering keywords"),
-    end_date: datetime = Query(..., description="End date for filtering keywords"),
-    db: MongoClient = Depends(get_database)
-):
-    result = await fetch_filtered_keywords_by_date(db, start_date, end_date)
-    return JSONResponse(content=result)

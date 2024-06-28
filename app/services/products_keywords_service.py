@@ -1,14 +1,10 @@
 # app/services/products_service.py
 
-from datetime import datetime
 from pymongo import MongoClient
-from app.models.product_keyword_models import CustomProducts, IdentifiedProducts
-from app.models.post_models import Post
 from app.services.llm_integration_service import get_gemini_chat, get_gemini_response
 
 
-
-
+# products identification
 def identify_products(facebook_post_description: str, db: MongoClient):
     """
     Attempts to identify products in a Facebook post description using Gemini.
@@ -28,8 +24,8 @@ def identify_products(facebook_post_description: str, db: MongoClient):
 
     potential_products = []
     for word in response.split(','):
-        if is_potentially_a_product(word, db):
-            potential_products.append(word)
+        if is_potentially_a_product(word.strip().lower(), db):
+            potential_products.append(word.strip())
 
     if potential_products:
         return potential_products
@@ -45,8 +41,9 @@ def is_potentially_a_product( product_name: str, db: MongoClient ):
     else:
         return False
     
-#keyword identification
 
+
+# keyword identification
 def identify_keywords(facebook_post_description:str,db:MongoClient):
 
     chat = get_gemini_chat()
@@ -58,15 +55,6 @@ def identify_keywords(facebook_post_description:str,db:MongoClient):
 
     keywords = []
     for word in response.split(','):
-        keywords.append(word.strip())
+        keywords.append(word.strip().lower())
 
     return keywords
-            
-
-    
-
-
-
-
-
-    

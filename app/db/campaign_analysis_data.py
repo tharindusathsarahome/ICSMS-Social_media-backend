@@ -1,6 +1,6 @@
 #app/db/campaign_analysis_data.py
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 from collections import defaultdict 
 from bson import ObjectId
@@ -8,25 +8,41 @@ from pymongo import MongoClient
 from app.models.post_models import PostOverviewByDate
 from app.models.campaign_models import Campaign
 from fastapi import HTTPException
+import re
 
 
 comment_sentiment_threshold = 0.7
 sub_comment_sentiment_threshold = 0.4
 
 
-def create_campaign(db: MongoClient, post_id: str) -> str:
-    post_id = ObjectId(post_id)
+def check_adding_campaign(db: MongoClient, platform: str, post_description_part: str) -> dict:
+    allPosts = list(db.Post.find({"sm_id": platform}, {"_id": 1, "description": 1}))
+
+    for post in allPosts:
+        if post["description"]:
+            if re.search(post_description_part, post["description"]):
+                post_id = post["_id"]
+
+                if db.Campaign.find_one({"post_id": post_id}) is not None:
+                    raise ValueError("Post description part already exists in another campaign")
+                else:
+                    return create_campaign(db, post_id)
+    
+    raise ValueError("Post not found")
+
+
+def create_campaign(db: MongoClient, post_id: ObjectId) -> str:
 
     comments = list(db.Comment.find({"post_id": post_id}))
     comment_ids = [comment["_id"] for comment in comments]
 
-    comment_sentiments = list(db.CommentSentiment.find({"comment_id": {"$in": comment_ids}}))
+    comment_sentiments = list(db.commentSentiments.find({"comment_id": {"$in": comment_ids}}))
 
 
     sub_comments = list(db.SubComment.find({"comment_id": {"$in": comment_ids}}))
     sub_comment_ids = [sub_comment["_id"] for sub_comment in sub_comments]
 
-    sub_comment_sentiments = list(db.SubCommentSentiment.find({"sub_comment_id": {"$in": sub_comment_ids}}))
+    sub_comment_sentiments = list(db.subcommentSentiments.find({"sub_comment_id": {"$in": sub_comment_ids}}))
 
 
     sentiment_by_date = defaultdict(list)
@@ -54,43 +70,8 @@ def create_campaign(db: MongoClient, post_id: str) -> str:
 
 
     campaign = Campaign(post_id=post_id, s_score_arr=s_score_arr)
-    db.Campaign.insert_one(campaign.dict())
-    return "Campaign created successfully"
-
-
-
-def get_created_campaign(db: MongoClient) -> dict:
-    pipeline = [
-        {
-            "$lookup": {
-                "from": "Post",
-                "localField": "post_id",
-                "foreignField": "_id",
-                "as": "postDetails"
-            }
-        },
-        {
-            "$unwind": "$postDetails"
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "campaign_id": "$campaign_id",
-                "title": "$postDetails.title",
-                "company": "$postDetails.author",
-                "s_score_arr": "$s_score_arr[-1]",
-                "social_media": "$sm_id"
-            }
-        }
-    ]
-    campaign_details = list(db.Campaign.aggregate(pipeline))
-
-    campaigns_by_sm = defaultdict(list)
-    for campaign in campaign_details:
-        campaigns_by_sm[campaign["social_media"]].append(campaign)
-
-    return campaigns_by_sm
-
+    result = db.Campaign.insert_one(campaign.dict())
+    return {"id": str(result.inserted_id)}
 
 
 def get_campaign_analysis_details(db: MongoClient) -> dict:
@@ -123,12 +104,11 @@ def get_campaign_analysis_details(db: MongoClient) -> dict:
         comment_increment = comments_last_7_days - comments_previous_7_14_days
         
         campaign_details.append({
-            "campaign_id": campaign.get("campaign_id"),
+            "campaign_id": campaign.get("_id"),
             "total_likes": post_details.get("total_likes"),
             "total_comments": post_details.get("total_comments"),
             "like_increment": like_increment,
             "comment_increment": comment_increment,
-            "title": post_details.get("title"),
             "company": post_details.get("author"),
             "img_url": post_details.get("img_url"),
             "s_score_arr": campaign.get("s_score_arr"),
@@ -141,152 +121,6 @@ def get_campaign_analysis_details(db: MongoClient) -> dict:
         campaigns_analysis_by_sm[campaign["social_media"]].append(campaign)
     
     return dict(campaigns_analysis_by_sm)
-
-
-# def get_campaign_analysis_details(db: MongoClient) -> dict:
-#     campaign_analysis_collection = db.Campaign
-#     pipeline = [
-#         {
-#             "$lookup": {
-#                 "from": "Post",
-#                 "localField": "post_id",
-#                 "foreignField": "_id",
-#                 "as": "postDetails"
-#             }
-#         },
-#         {
-#             "$lookup": {
-#                 "from": "PostOverviewByDate",
-#                 "localField": "post_id",
-#                 "foreignField": "post_id",
-#                 "as": "postOverview"
-#             }
-#         },
-#         {
-#             "$unwind": "$postDetails"
-#         },
-#         {
-#             "$addFields": {
-#                 "last_7_days": {
-#                     "$filter": {
-#                         "input": "$postOverview",
-#                         "as": "overview",
-#                         "cond": {
-#                             "$gte": ["$$overview.date", {"$dateSubtract": {"startDate": "$$NOW", "unit": "day", "amount": 7}}]
-#                         }
-#                     }
-#                 },
-#                 "previous_7_14_days": {
-#                     "$filter": {
-#                         "input": "$postOverview",
-#                         "as": "overview",
-#                         "cond": {
-#                             "$and": [
-#                                 {"$lt": ["$$overview.date", {"$dateSubtract": {"startDate": "$$NOW", "unit": "day", "amount": 7}}]},
-#                                 {"$gte": ["$$overview.date", {"$dateSubtract": {"startDate": "$$NOW", "unit": "day", "amount": 14}}]}
-#                             ]
-#                         }
-#                     }
-#                 }
-#             }
-#         },
-#         {
-#             "$addFields": {
-#                 "likes_last_7_days": {"$sum": "$last_7_days.total_likes"},
-#                 "likes_previous_7_14_days": {"$sum": "$previous_7_14_days.total_likes"},
-#                 "comments_last_7_days": {"$sum": "$last_7_days.total_comments"},
-#                 "comments_previous_7_14_days": {"$sum": "$previous_7_14_days.total_comments"}
-#             }
-#         },
-#         {
-#             "$project": {
-#                 "_id": 0,
-#                 "campaign_id": "$campaign_id",
-#                 "total_likes": "$postDetails.total_likes",
-#                 "total_comments": "$postDetails.total_comments",
-#                 "like_increment": {
-#                     "$subtract": [
-#                         "$likes_last_7_days",
-#                         "$likes_previous_7_14_days"
-#                     ]
-#                 },
-#                 "comment_increment": {
-#                     "$subtract": [
-#                         "$comments_last_7_days",
-#                         "$comments_previous_7_14_days"
-#                     ]
-#                 },
-#                 "title": "$postDetails.title",
-#                 "company": "$postDetails.author",
-#                 "img_url": "$postDetails.img_url",
-#                 "s_score_arr": "$s_score_arr",
-#                 "description": "$postDetails.description",
-#                 "social_media": "$postDetails.sm_id"
-#             }
-#         }
-#     ]
-
-#     campaign_analysis_details = list(campaign_analysis_collection.aggregate(pipeline))
-
-#     campaigns_analysis_by_sm = defaultdict(list)
-#     for campaign in campaign_analysis_details:
-#         campaigns_analysis_by_sm[campaign["social_media"]].append(campaign)
-
-#     return dict(campaigns_analysis_by_sm)
-
-
-
-def delete_campaign(db: MongoClient, campaign_id: str) -> dict:
-    try:
-        campaign_obj_id = ObjectId(campaign_id)
-        
-        result = db.Campaign.delete_one({"_id": campaign_obj_id})
-        
-        if result.deleted_count == 1:
-            return {"status": "success", "message": "Campaign deleted successfully."}
-        else:
-            return {"status": "failure", "message": "Campaign not found."}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-
-
-def get_filtered_keywords_by_date(db: MongoClient, start_date: datetime, end_date: datetime) -> List[dict]:
-    filtered_keywords_collection = db.FilteredKeywordsByDate
-    pipeline = [
-        {
-            "$match": {
-                "date": {
-                    "$gte": start_date,
-                    "$lte": end_date
-                }
-            }
-        },
-        {
-            "$lookup": {
-                "from": "Keyword",
-                "localField": "Keywords_keyword_id",
-                "foreignField": "keyword_id",
-                "as": "keywordDetails"
-            }
-        },
-        {
-            "$unwind": "$keywordDetails"
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "keyword_id": "$Keywords_keyword_id",
-                "date": "$date",
-                "total_count": "$total_count",
-                "keyword": "$keywordDetails.keyword",
-                "author": "$keywordDetails.author"
-            }
-        }
-    ]
-    filtered_keywords = list(filtered_keywords_collection.aggregate(pipeline))
-    return filtered_keywords
-
 
 
 
@@ -311,7 +145,7 @@ def calculate_post_overview_by_date(db: MongoClient) -> str:
 
         db.PostOverviewByDate.insert_one(post_overview.dict())
 
-    print("Post overview calculated successfully.")
+    return "Post overview calculated successfully."
 
 
 def update_campaigns(db: MongoClient) -> str:
@@ -323,12 +157,12 @@ def update_campaigns(db: MongoClient) -> str:
         comments = list(db.Comment.find({"post_id": post_id}))
         comment_ids = [comment["_id"] for comment in comments]
 
-        comment_sentiments = list(db.CommentSentiment.find({"comment_id": {"$in": comment_ids}}))
+        comment_sentiments = list(db.commentSentiments.find({"comment_id": {"$in": comment_ids}}))
 
         sub_comments = list(db.SubComment.find({"comment_id": {"$in": comment_ids}}))
         sub_comment_ids = [sub_comment["_id"] for sub_comment in sub_comments]
 
-        sub_comment_sentiments = list(db.SubCommentSentiment.find({"sub_comment_id": {"$in": sub_comment_ids}}))
+        sub_comment_sentiments = list(db.subcommentSentiments.find({"sub_comment_id": {"$in": sub_comment_ids}}))
 
         sentiment_by_date = defaultdict(list)
 

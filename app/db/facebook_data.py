@@ -1,14 +1,11 @@
 # app/db/facebook_data.py
 
-from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 from facebook import GraphAPI
-from typing import List, Dict
 
 
-from app.models.post_models import Post, Comment, SubComment
-from app.utils.common import convert_s_score_to_color
+from app.models.post_models import Post, Comment, SubComment, CommentSentiment, SubCommentSentiment
 from app.services.sentiment_analysis_service import analyze_sentiment
 
 
@@ -23,12 +20,13 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
 
         post_model = Post(
             fb_post_id=post['id'],
+            sm_id='SM01',
             description=post.get('message', None),
             img_url=post.get('full_picture', None),
             author = post['from']['name'] if 'from' in post else None,
             total_likes=post['likes']['summary']['total_count'],
             total_comments=post['comments']['summary']['total_count'],
-            total_shares=post.get('shares', 0),
+            total_shares=post['shares']['count'] if 'shares' in post else 0,
             date=datetime.strptime(post['created_time'], '%Y-%m-%dT%H:%M:%S%z'),
             is_popular=post['is_popular'],
             post_url=post['permalink_url']
@@ -75,34 +73,42 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
                 if db.SubComment.find_one({"comment_id": db_comment_id, "description": sub_comment['message']}) is None:
                     db.SubComment.insert_one(sub_comment_model.model_dump())
 
-    print("Data fetched and stored successfully.")
+    return "Data fetched and stored successfully."
 
-
-
-
-# ------------------ CRON TASKS ------------------
 
 def analyze_and_update_comments(db: MongoClient):
-    unread_comments = db.Comment.find({"s_score": {"$exists": False}})
+    all_comments = db.Comment.find()
 
-    for comment in unread_comments:
-        description = comment['description']
-        score = analyze_sentiment(description)
-        db.Comment.update_one({"fb_comment_id": comment['comment_id']}, {"$set": {"s_score": score}})
-        sentiment_comment_collection = db.sentimentcomments
-        sentiment_comment_collection.insert_one({"fb_comment_id": comment['comment_id'], "s_score": score})
+    for comment in all_comments:
+        if db.commentSentiments.find_one({"comment_id": comment['_id']}) is not None:
+            continue
+        
+        s_score = analyze_sentiment(comment['description'])
+        comment_sentiment = CommentSentiment(
+            comment_id=comment['_id'],
+            s_score=s_score,
+            date_calculated=datetime.now()
+        )
+
+        db.commentSentiments.insert_one(comment_sentiment.model_dump())
     
-    print("Sentiment analysis for comments completed.")
+    return "Sentiment analysis for comments completed."
 
 
 def analyze_and_update_subcomments(db: MongoClient):
-    unread_subcomments = db.SubComment.find({"s_score": {"$exists": False}})
+    all_subcomments = db.SubComment.find()
 
-    for subcomment in unread_subcomments:
-        description = subcomment['description']
-        score = analyze_sentiment(description)
-        db.SubComment.update_one({"comment_id": subcomment['comment_id']}, {"$set": {"s_score": score}})
-        sentiment_subcomment_collection = db.sentimentsubcomment
-        sentiment_subcomment_collection.insert_one({"comment_id": subcomment['comment_id'], "s_score": score})
+    for subcomment in all_subcomments:
+        if db.subcommentSentiments.find_one({"sub_comment_id": subcomment['_id']}) is not None:
+            continue
 
-    print("Sentiment analysis for subcomments completed.")
+        s_score = analyze_sentiment(subcomment['description'])
+        subcomment_sentiment = SubCommentSentiment(
+            sub_comment_id=subcomment['_id'],
+            s_score=s_score,
+            date_calculated=datetime.now()
+        )
+
+        db.subcommentSentiments.insert_one(subcomment_sentiment.model_dump())
+    
+    return "Sentiment analysis for subcomments completed."

@@ -19,4 +19,3 @@ def get_gemini_response(chat, message):
     """
     response = chat.send_message(message)
     return response.text
-
