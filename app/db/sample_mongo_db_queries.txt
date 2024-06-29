@@ -1,0 +1,187 @@
+
+// Endpoint Sample Insert Query
+{"insert": "Keywords", "documents": [{"keyword_id": { "$oid": "5f8f4b3b9b3f3b001f3b3b3b" }, "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
+
+
+
+// change every String Date to BSON Date
+db.IdentifiedProducts.updateMany(
+    { "date": { "$type": "string" } },
+    [
+        {
+            "$set": {
+                "date": {
+                    "$dateFromString": {
+                        "dateString": "$date",
+                        "format": "%Y-%m-%d"
+                    }
+                }
+            }
+        }
+    ]
+)//
+
+def query_filtered_keywords_by_date(start_date: date, end_date: date) -> List[FilteredKeywordsByDate]:
+    # Your logic to fetch data from the database
+    # This is a mock implementation. Replace it with your actual database querying code.
+    data = [
+        {"date": start_date, "keyword": "example", "frequency": 10},
+        {"date": end_date, "keyword": "sample", "frequency": 5}
+    ]
+    return [FilteredKeywordsByDate(**item) for item in data]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_campaign_analysis_details(db: MongoClient) -> dict:
+    campaign_analysis_collection = db.Campaign
+    post_collection = db.Post
+    post_overview_collection = db.PostOverviewByDate
+    
+    campaigns = list(campaign_analysis_collection.find())
+    
+    campaign_details = []
+    
+    for campaign in campaigns:
+        post_id = campaign['post_id']
+        
+        post_details = post_collection.find_one({'_id': post_id})
+        
+        post_overviews = list(post_overview_collection.find({'post_id': post_id}))
+        
+        now = datetime.now()
+        last_7_days = [overview for overview in post_overviews if overview['date'] >= now - timedelta(days=7)]
+        previous_7_14_days = [overview for overview in post_overviews if now - timedelta(days=14) <= overview['date'] < now - timedelta(days=7)]
+        
+        likes_last_7_days = sum(overview['total_likes'] for overview in last_7_days)
+        likes_previous_7_14_days = sum(overview['total_likes'] for overview in previous_7_14_days)
+        
+        comments_last_7_days = sum(overview['total_comments'] for overview in last_7_days)
+        comments_previous_7_14_days = sum(overview['total_comments'] for overview in previous_7_14_days)
+        
+        like_increment = likes_last_7_days - likes_previous_7_14_days
+        comment_increment = comments_last_7_days - comments_previous_7_14_days
+        
+        campaign_details.append({
+            "campaign_id": campaign.get("campaign_id"),
+            "total_likes": post_details.get("total_likes"),
+            "total_comments": post_details.get("total_comments"),
+            "like_increment": like_increment,
+            "comment_increment": comment_increment,
+            "title": post_details.get("title"),
+            "company": post_details.get("author"),
+            "img_url": post_details.get("img_url"),
+            "s_score_arr": campaign.get("s_score_arr"),
+            "description": post_details.get("description"),
+            "social_media": post_details.get("sm_id")
+        })
+    
+    campaigns_analysis_by_sm = defaultdict(list)
+    for campaign in campaign_details:
+        campaigns_analysis_by_sm[campaign["social_media"]].append(campaign)
+    
+    return dict(campaigns_analysis_by_sm)
+
+
+# def get_campaign_analysis_details(db: MongoClient) -> dict:
+#     campaign_analysis_collection = db.Campaign
+#     pipeline = [
+#         {
+#             "$lookup": {
+#                 "from": "Post",
+#                 "localField": "post_id",
+#                 "foreignField": "_id",
+#                 "as": "postDetails"
+#             }
+#         },
+#         {
+#             "$lookup": {
+#                 "from": "PostOverviewByDate",
+#                 "localField": "post_id",
+#                 "foreignField": "post_id",
+#                 "as": "postOverview"
+#             }
+#         },
+#         {
+#             "$unwind": "$postDetails"
+#         },
+#         {
+#             "$addFields": {
+#                 "last_7_days": {
+#                     "$filter": {
+#                         "input": "$postOverview",
+#                         "as": "overview",
+#                         "cond": {
+#                             "$gte": ["$$overview.date", {"$dateSubtract": {"startDate": "$$NOW", "unit": "day", "amount": 7}}]
+#                         }
+#                     }
+#                 },
+#                 "previous_7_14_days": {
+#                     "$filter": {
+#                         "input": "$postOverview",
+#                         "as": "overview",
+#                         "cond": {
+#                             "$and": [
+#                                 {"$lt": ["$$overview.date", {"$dateSubtract": {"startDate": "$$NOW", "unit": "day", "amount": 7}}]},
+#                                 {"$gte": ["$$overview.date", {"$dateSubtract": {"startDate": "$$NOW", "unit": "day", "amount": 14}}]}
+#                             ]
+#                         }
+#                     }
+#                 }
+#             }
+#         },
+#         {
+#             "$addFields": {
+#                 "likes_last_7_days": {"$sum": "$last_7_days.total_likes"},
+#                 "likes_previous_7_14_days": {"$sum": "$previous_7_14_days.total_likes"},
+#                 "comments_last_7_days": {"$sum": "$last_7_days.total_comments"},
+#                 "comments_previous_7_14_days": {"$sum": "$previous_7_14_days.total_comments"}
+#             }
+#         },
+#         {
+#             "$project": {
+#                 "_id": 0,
+#                 "campaign_id": "$campaign_id",
+#                 "total_likes": "$postDetails.total_likes",
+#                 "total_comments": "$postDetails.total_comments",
+#                 "like_increment": {
+#                     "$subtract": [
+#                         "$likes_last_7_days",
+#                         "$likes_previous_7_14_days"
+#                     ]
+#                 },
+#                 "comment_increment": {
+#                     "$subtract": [
+#                         "$comments_last_7_days",
+#                         "$comments_previous_7_14_days"
+#                     ]
+#                 },
+#                 "title": "$postDetails.title",
+#                 "company": "$postDetails.author",
+#                 "img_url": "$postDetails.img_url",
+#                 "s_score_arr": "$s_score_arr",
+#                 "description": "$postDetails.description",
+#                 "social_media": "$postDetails.sm_id"
+#             }
+#         }
+#     ]
+
+#     campaign_analysis_details = list(campaign_analysis_collection.aggregate(pipeline))
+
+#     campaigns_analysis_by_sm = defaultdict(list)
+#     for campaign in campaign_analysis_details:
+#         campaigns_analysis_by_sm[campaign["social_media"]].append(campaign)
+
+#     return dict(campaigns_analysis_by_sm)

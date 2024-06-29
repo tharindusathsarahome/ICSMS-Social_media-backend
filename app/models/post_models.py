@@ -1,26 +1,65 @@
-# app/models/social_media.py
+# app/models/post_models.py
 
-from typing import List
 from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+from bson import ObjectId
 
-class SubComments(BaseModel):
-    id: str
-    sub_comment: str
-    created_time: str
 
-class CommentsOfPosts(BaseModel):
-    id: str
-    comment: str
-    created_time: str
-    likes: int
-    sub_comments: List[SubComments]
+class Post(BaseModel):
+    fb_post_id: str
+    sm_id: str
+    description: Optional[str]
+    img_url: Optional[str]
+    author: Optional[str]
+    total_likes: int
+    total_comments: int
+    total_shares: int
+    date: datetime
+    is_popular: bool
+    post_url: str
 
-class FacebookPost(BaseModel):
-    id: str
-    message: str
-    created_time: str
-    likes: int
-    comments: List[CommentsOfPosts]
+class Comment(BaseModel):
+    fb_comment_id: str
+    post_id: ObjectId
+    description: str
+    author: Optional[str] = None
+    total_likes: int
+    date: datetime
+    comment_url: str
 
-class FacebookPostsList(BaseModel):
-    items: List[FacebookPost]
+    class Config:
+        arbitrary_types_allowed = True
+
+class SubComment(BaseModel):
+    comment_id: ObjectId
+    description: str
+    author: Optional[str] = None
+    date: datetime
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class CommentSentiment(BaseModel):
+    comment_id: ObjectId
+    s_score: float
+    date_calculated: datetime
+    class Config:
+        arbitrary_types_allowed = True
+
+class SubCommentSentiment(BaseModel):
+    sub_comment_id: ObjectId
+    s_score: float
+    date_calculated: datetime
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class PostOverviewByDate(BaseModel):
+    post_id: ObjectId
+    date: datetime
+    total_likes: int
+    total_comments: int
+    class Config:
+        arbitrary_types_allowed = True

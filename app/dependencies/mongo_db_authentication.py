@@ -1,4 +1,4 @@
-# app/db/database.py
+# app/db/connection.py
 
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
@@ -10,7 +10,9 @@ def connect_to_mongo():
     """
 
     global client
-    client = MongoClient(MONGODB_URI, server_api=ServerApi('1'))
+    client = MongoClient(MONGODB_URI)
+    print("Connected to MongoDB")
+    
 
 def get_database():
     """
@@ -19,6 +21,7 @@ def get_database():
 
     global client
     return client[MONGODB_DB]
+
 
 def close_mongo_connection():
     """
