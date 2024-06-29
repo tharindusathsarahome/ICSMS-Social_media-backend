@@ -1,4 +1,4 @@
-# app/services/sentiment_analysis.py
+# app/services/sentiment_analysis_service.py
 
 import boto3
 from app.core.config import AWS_KEY_ID, AWS_SECRET_KEY, REGION_NAME
@@ -41,3 +41,4 @@ def response_to_score(response: dict) -> float:
 
     sentiment_score = positive - negative   # = (+1 * positive) + (-1 * negative)
     return sentiment_score
+

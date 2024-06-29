@@ -1,11 +1,14 @@
-from typing import List
+# app/models/post_models.py
+
 from pydantic import BaseModel
-from typing import Optional
-from bson import ObjectId
+from typing import Optional, List
 from datetime import datetime
+from bson import ObjectId
+
 
 class Post(BaseModel):
     fb_post_id: str
+    sm_id: str
     description: Optional[str]
     img_url: Optional[str]
     author: Optional[str]
@@ -20,20 +23,23 @@ class Comment(BaseModel):
     fb_comment_id: str
     post_id: ObjectId
     description: str
-    author: Optional[str]
+    author: Optional[str] = None
     total_likes: int
     date: datetime
     comment_url: str
+
     class Config:
         arbitrary_types_allowed = True
 
 class SubComment(BaseModel):
     comment_id: ObjectId
     description: str
-    author: Optional[str]
+    author: Optional[str] = None
     date: datetime
+
     class Config:
         arbitrary_types_allowed = True
+
 
 class CommentSentiment(BaseModel):
     comment_id: ObjectId
@@ -49,11 +55,6 @@ class SubCommentSentiment(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-class Campaign(BaseModel):
-    post_id: ObjectId
-    s_score_arr: List[float]
-    class Config:
-        arbitrary_types_allowed = True
 
 class PostOverviewByDate(BaseModel):
     post_id: ObjectId

@@ -8,24 +8,33 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
 from app.dependencies.mongo_db_authentication import get_database
-from app.services.sentiment_analysis import analyze_sentiment
+from app.services.sentiment_analysis_service import analyze_sentiment
 from app.utils.s_analysis_helper import scale_score
 import json
 
 router = APIRouter()
 
 
-@router.get("/test_database", response_model=dict)
-async def test_database(
-    db: MongoClient = Depends(get_database),
+from app.db.campaign_analysis_data import calculate_post_overview_by_date
+@router.get("/test")
+async def test(
+    db: MongoClient = Depends(get_database)
+):
+    calculate_post_overview_by_date(db)
+    return {"message": "Complete"}
+
+
+@router.get("/test_database")
+async def test_database_connection(
+    db: MongoClient = Depends(get_database)
 ):
     try:
-        db["SocialMedia"].find()
-        return JSONResponse(content={"message": "Database is working fine"})
+        db.server_info()
+        return {"status": "Connection successful"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error[test_database]: {str(e)}")
-
-
+        return {"error": str(e)}
+    
+    
 @router.get("/analyse_sentiments")
 async def analyse_sentiments(
     sentence: str = Query(..., title="Sentence to be analyzed"),

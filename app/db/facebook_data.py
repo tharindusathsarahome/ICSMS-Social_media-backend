@@ -1,13 +1,15 @@
 # app/db/facebook_data.py
 
-from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 from facebook import GraphAPI
 
-from app.models.post_models import Post, Comment, SubComment
-from app.utils.common import convert_s_score_to_color
 
+from app.models.post_models import Post, Comment, SubComment, CommentSentiment, SubCommentSentiment
+from app.services.sentiment_analysis_service import analyze_sentiment
+
+
+# ------------------ CRON TASKS ------------------
 
 def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
     posts = graph.get_object('me/posts', fields='id,message,created_time,from,likes.summary(true),comments.summary(true),full_picture,shares,permalink_url,is_popular')
@@ -18,12 +20,13 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
 
         post_model = Post(
             fb_post_id=post['id'],
+            sm_id='SM01',
             description=post.get('message', None),
             img_url=post.get('full_picture', None),
             author = post['from']['name'] if 'from' in post else None,
             total_likes=post['likes']['summary']['total_count'],
             total_comments=post['comments']['summary']['total_count'],
-            total_shares=post.get('shares', 0),
+            total_shares=post['shares']['count'] if 'shares' in post else 0,
             date=datetime.strptime(post['created_time'], '%Y-%m-%dT%H:%M:%S%z'),
             is_popular=post['is_popular'],
             post_url=post['permalink_url']
@@ -70,6 +73,42 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
                 if db.SubComment.find_one({"comment_id": db_comment_id, "description": sub_comment['message']}) is None:
                     db.SubComment.insert_one(sub_comment_model.model_dump())
 
+    return "Data fetched and stored successfully."
 
-# {"insert": "Keywords", "documents": [{"sm_id": "SM01", "author": "Dummy Author 1", "keyword": "Dummy Keyword 1"}, {"sm_id": "SM01", "author": "Dummy Author 2", "keyword": "Dummy Keyword 2"}, {"sm_id": "SM01", "author": "Dummy Author 3", "keyword": "Dummy Keyword 3"}, {"sm_id": "SM01", "author": "Dummy Author 4", "keyword": "Dummy Keyword 4"}, {"sm_id": "SM01", "author": "Dummy Author 5", "keyword": "Dummy Keyword 5"}]}
-# {"insert": "KeywordAlerts", "documents": [{"keyword_ids": ["661b851282246fcaaab579d4"], "author": "Dummy Author 1", "min_val": 20, "max_val": 50, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d5", "661b851282246fcaaab579d4"], "author": "Dummy Author 2", "min_val": 10, "max_val": 30, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d6"], "author": "Dummy Author 3", "min_val": 40, "max_val": 60, "alert_type": "Email"}, {"keyword_ids": ["661b851282246fcaaab579d7"], "author": "Dummy Author 4", "min_val": 5, "max_val": 25, "alert_type": "App"}, {"keyword_ids": ["661b851282246fcaaab579d8", "661b851282246fcaaab579d6", "661b851282246fcaaab579d7"], "author": "Dummy Author 5", "min_val": 35, "max_val": 70, "alert_type": "Email"}]}
+
+def analyze_and_update_comments(db: MongoClient):
+    all_comments = db.Comment.find()
+
+    for comment in all_comments:
+        if db.commentSentiments.find_one({"comment_id": comment['_id']}) is not None:
+            continue
+        
+        s_score = analyze_sentiment(comment['description'])
+        comment_sentiment = CommentSentiment(
+            comment_id=comment['_id'],
+            s_score=s_score,
+            date_calculated=datetime.now()
+        )
+
+        db.commentSentiments.insert_one(comment_sentiment.model_dump())
+    
+    return "Sentiment analysis for comments completed."
+
+
+def analyze_and_update_subcomments(db: MongoClient):
+    all_subcomments = db.SubComment.find()
+
+    for subcomment in all_subcomments:
+        if db.subcommentSentiments.find_one({"sub_comment_id": subcomment['_id']}) is not None:
+            continue
+
+        s_score = analyze_sentiment(subcomment['description'])
+        subcomment_sentiment = SubCommentSentiment(
+            sub_comment_id=subcomment['_id'],
+            s_score=s_score,
+            date_calculated=datetime.now()
+        )
+
+        db.subcommentSentiments.insert_one(subcomment_sentiment.model_dump())
+    
+    return "Sentiment analysis for subcomments completed."

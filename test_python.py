@@ -1,28 +1,65 @@
-result = {
-    '661bc29a82246fcaaab59d43': {'alert': {'_id': '661bc29a82246fcaaab59d43', 'keyword_ids': ['661b851282246fcaaab579d4'], 'author': 'Dummy Author 1', 'min_val': 20, 'max_val': 50, 'alert_type': 'Email'}, 'keywords': [{'_id': '661b851282246fcaaab579d4', 'sm_id': 'SM01', 'author': 'Dummy Author 1', 'keyword': 'Dummy Keyword 1'}]}, 
-    '661bc29a82246fcaaab59d44': {'alert': {'_id': '661bc29a82246fcaaab59d44', 'keyword_ids': ['661b851282246fcaaab579d5', '661b851282246fcaaab579d4'], 'author': 'Dummy Author 2', 'min_val': 10, 'max_val': 30, 'alert_type': 'App'}, 'keywords': [{'_id': '661b851282246fcaaab579d4', 'sm_id': 'SM01', 'author': 'Dummy Author 1', 'keyword': 'Dummy Keyword 1'}, {'_id': '661b851282246fcaaab579d5', 'sm_id': 'SM01', 'author': 'Dummy Author 2', 'keyword': 'Dummy Keyword 2'}]}, 
-    '661bc29a82246fcaaab59d45': {'alert': {'_id': '661bc29a82246fcaaab59d45', 'keyword_ids': ['661b851282246fcaaab579d6'], 'author': 'Dummy Author 3', 'min_val': 40, 'max_val': 60, 'alert_type': 'Email'}, 'keywords': [{'_id': '661b851282246fcaaab579d6', 'sm_id': 'SM01', 'author': 'Dummy Author 3', 'keyword': 'Dummy Keyword 3'}]}, 
-    '661bc29a82246fcaaab59d46': {'alert': {'_id': '661bc29a82246fcaaab59d46', 'keyword_ids': ['661b851282246fcaaab579d7'], 'author': 'Dummy Author 4', 'min_val': 5, 'max_val': 25, 'alert_type': 'App'}, 'keywords': [{'_id': '661b851282246fcaaab579d7', 'sm_id': 'SM01', 'author': 'Dummy Author 4', 'keyword': 'Dummy Keyword 4'}]}, 
-    '661bc29a82246fcaaab59d47': {'alert': {'_id': '661bc29a82246fcaaab59d47', 'keyword_ids': ['661b851282246fcaaab579d8', '661b851282246fcaaab579d6', '661b851282246fcaaab579d7'], 'author': 'Dummy Author 5', 'min_val': 35, 'max_val': 70, 'alert_type': 'Email'}, 'keywords': [{'_id': '661b851282246fcaaab579d6', 'sm_id': 'SM01', 'author': 'Dummy Author 3', 'keyword': 'Dummy Keyword 3'}, {'_id': '661b851282246fcaaab579d7', 'sm_id': 'SM01', 'author': 'Dummy Author 4', 'keyword': 'Dummy Keyword 4'}, {'_id': '661b851282246fcaaab579d8', 'sm_id': 'SM01', 'author': 'Dummy Author 5', 'keyword': 'Dummy Keyword 5'}]}
-}
+import google.generativeai as genai
 
-itemService = []
+genai.configure(api_key="AIzaSyAOc9Ixda9XeUddNGyqL9RRLvLpDrUZ5DU")
 
-for key, value in result.items():
-    keyword = value['keywords'][0]['keyword']
-    alert_type = value['alert']['alert_type']
-    min_val = value['alert']['min_val']
-    max_val = value['alert']['max_val']
-    author = value['alert']['author']
 
-    item = {
-        'keyword': keyword,
-        'alerttype': alert_type,
-        'min_val': min_val,
-        'max_val': max_val,
-        'author': author
-    }
+def get_gemini_chat():
+    """
+    Starts a chat session with the Gemini LLM.
+    """
+    model = genai.GenerativeModel('gemini-pro')
+    chat = model.start_chat(history=[])
+    return chat
 
-    itemService.append(item)
 
-print(itemService)
+def get_gemini_response(chat, message):
+    """
+    Sends a message to the ongoing chat session and returns the response.
+    """
+    response = chat.send_message(message)
+    return response.text
+
+
+def identify_products(facebook_post_description):
+    """
+    Attempts to identify products in a Facebook post description using Gemini.
+
+    Args:
+        facebook_post_description (str): The text content of the Facebook post.
+
+    Returns:
+        str: A list of potential products found in the description.
+    """
+
+    chat = get_gemini_chat()
+
+    message = f"This is a Facebook post description: '{facebook_post_description}'.\n Give me a ',' separated list string of products mentioned in this post. Give the mainly identified Products. Not sub Products or partially mentioned Products. And Do not provide anything else."
+
+    response = get_gemini_response(chat, message)
+
+    potential_products = []
+    for word in response.split(","):
+        if is_potentially_a_product(word):
+            potential_products.append(word)
+
+    if potential_products:
+        return potential_products
+    else:
+        return -1
+
+
+def is_potentially_a_product(word):
+    print(f"Checking if '{word}' is a product...")
+    return False  # Replace with your actual product identification logic
+
+
+
+text = """Ever dreamed of building your own AI?  
+
+Google Vertex AI makes it possible! This awesome platform lets ANYONE (yes, even you!) create cool AI tools like chatbots, image recognition, and more.  No coding experience needed!    Join the discussion: what AI will YOU build?  
+
+#AI #VertexAI #Google #BuildYourOwnAI"""
+
+
+if __name__ == "__main__":
+    print(identify_products(text))
