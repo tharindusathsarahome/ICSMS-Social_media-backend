@@ -44,3 +44,9 @@ app.add_event_handler("startup", start_scheduler)
 app.add_event_handler("startup", connect_to_mongo)
 
 app.add_event_handler("shutdown", close_mongo_connection)
+
+
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app)
