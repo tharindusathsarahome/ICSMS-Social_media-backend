@@ -7,26 +7,25 @@ from bson import ObjectId
 
 
 class Post(BaseModel):
-    fb_post_id: str
+    sm_post_id: str
     sm_id: str
     description: Optional[str]
     img_url: Optional[str]
-    author: Optional[str]
+    author: Optional[str] = None
     total_likes: int
     total_comments: int
     total_shares: int
     date: datetime
-    is_popular: bool
     post_url: str
 
 class Comment(BaseModel):
-    fb_comment_id: str
+    sm_comment_id: str
     post_id: ObjectId
     description: str
     author: Optional[str] = None
     total_likes: int
     date: datetime
-    comment_url: str
+    comment_url: Optional[str]
 
     class Config:
         arbitrary_types_allowed = True
