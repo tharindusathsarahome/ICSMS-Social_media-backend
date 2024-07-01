@@ -39,10 +39,10 @@ class SubComment(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-
 class CommentSentiment(BaseModel):
     comment_id: ObjectId
     s_score: float
+    sm_id: str
     date_calculated: datetime
     class Config:
         arbitrary_types_allowed = True
@@ -50,10 +50,10 @@ class CommentSentiment(BaseModel):
 class SubCommentSentiment(BaseModel):
     sub_comment_id: ObjectId
     s_score: float
+    sm_id: str
     date_calculated: datetime
     class Config:
         arbitrary_types_allowed = True
-
 
 class PostOverviewByDate(BaseModel):
     post_id: ObjectId

@@ -144,11 +144,18 @@ def analyze_and_update_comments(db: MongoClient):
     for comment in all_comments:
         if db.commentSentiments.find_one({"comment_id": comment['_id']}) is not None:
             continue
+
+        post = db.Post.find_one({"_id": comment['post_id']})
+        if post is None:
+            continue
+
+        sm_id = post['sm_id']
         
         s_score = analyze_sentiment(comment['description'])
         comment_sentiment = CommentSentiment(
             comment_id=comment['_id'],
             s_score=s_score,
+            sm_id=sm_id,
             date_calculated=datetime.now()
         )
 
@@ -164,10 +171,21 @@ def analyze_and_update_subcomments(db: MongoClient):
         if db.subcommentSentiments.find_one({"sub_comment_id": subcomment['_id']}) is not None:
             continue
 
+        comment = db.Comment.find_one({"_id": subcomment['comment_id']})
+        if comment is None:
+            continue
+
+        post = db.Post.find_one({"_id": comment['post_id']})
+        if post is None:
+            continue
+
+        sm_id = post['sm_id']
+
         s_score = analyze_sentiment(subcomment['description'])
         subcomment_sentiment = SubCommentSentiment(
             sub_comment_id=subcomment['_id'],
             s_score=s_score,
+            sm_id=sm_id,
             date_calculated=datetime.now()
         )
 
