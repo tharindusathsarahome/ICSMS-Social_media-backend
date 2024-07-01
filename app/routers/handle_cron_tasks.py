@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, BackgroundTasks
 
-from app.tasks.post_tasks import run_fetch_and_store_facebook, run_calculate_post_overview_by_date, run_analyze_comments
+from app.tasks.post_tasks import run_fetch_and_store_facebook, run_fetch_and_store_instagram, run_calculate_post_overview_by_date, run_analyze_comments
 from app.tasks.product_keyword_tasks import run_add_identified_products, run_add_identified_keywords
 from app.tasks.campaign_tasks import run_update_campaigns
 
@@ -14,6 +14,11 @@ router = APIRouter()
 async def fetch_and_store_facebook(background_tasks: BackgroundTasks):
     background_tasks.add_task(run_fetch_and_store_facebook)
     return {"message": "Fetching and storing Facebook data started."}
+
+@router.get("/fetch_and_store_instagram", response_model=dict)
+async def fetch_and_store_instagram(background_tasks: BackgroundTasks):
+    background_tasks.add_task(run_fetch_and_store_instagram)
+    return {"message": "Fetching and storing Instagram data started."}
 
 @router.get("/calculate_post_overview_by_date", response_model=dict)
 async def calculate_post_overview_by_date(background_tasks: BackgroundTasks):

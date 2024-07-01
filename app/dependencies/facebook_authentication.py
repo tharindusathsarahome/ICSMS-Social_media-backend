@@ -22,3 +22,9 @@ async def authenticate_with_facebook() -> GraphAPI:
             return GraphAPI(access_token=token)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error authenticating with Facebook: {str(e)}")
+
+async def authenticate_with_instagram() -> GraphAPI:
+    """
+    Authenticate with Instagram and return the GraphAPI object.
+    """
+    return GraphAPI(access_token=FACEBOOK_USER_TOKEN)
