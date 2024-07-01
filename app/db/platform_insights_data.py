@@ -108,13 +108,19 @@ def highlighted_comments(db: MongoClient, platform: str, start_date: str, end_da
         
         if total_sentiment is not None:
             comment = db.Comment.find_one({"_id": comment_sentiment['comment_id']})
+            
+            if comment["comment_url"] is None:
+                url = db.Post.find_one({"_id": comment["post_id"]})["post_url"]
+            else:
+                url = comment["comment_url"]
+                
             comments_with_sentiment.append({
                 "comment_id": str(comment_sentiment['comment_id']),
                 "total_sentiment": total_sentiment,
                 "description": comment.get("description", ""),
                 "author": comment.get("author", ""),
                 "date": comment["date"].strftime("%Y-%m-%d"),
-                "comment_url": comment["comment_url"],
+                "comment_url": url,
                 "s_score": s_score,
                 "color": convert_s_score_to_color(s_score)
             })

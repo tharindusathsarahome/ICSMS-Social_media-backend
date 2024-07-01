@@ -132,7 +132,7 @@ def delete_product_alert(db: MongoClient, alert_id: str) -> bool:
 def add_sentiment_shift_threshold(db: MongoClient, sm_id: str, alert_type: str, min_val: int = None, max_val: int = None) -> dict:
 
     existing_threshold = db.SentimentShift.find_one({
-        "SocialMedia_sm_id": sm_id,
+        "sm_id": sm_id,
         "alert_type": alert_type
     })
     
@@ -141,7 +141,7 @@ def add_sentiment_shift_threshold(db: MongoClient, sm_id: str, alert_type: str, 
     
    
     new_threshold = {
-        "SocialMedia_sm_id": sm_id,
+        "sm_id": sm_id,
         "alert_type": alert_type,
         "min_val": min_val,
         "max_val": max_val
@@ -159,20 +159,17 @@ def get_sentiment_shift_threshold_by_id(db: MongoClient, threshold_id: str) -> d
 
 
 def get_sentiment_shift_threshold(db: MongoClient) -> list:
-    sentiment_shift = list(db.SentimentShifts.find({}, {"_id": 0, "author": 0}))
+    sentiment_shift = list(db.SentimentShift.find({}))
     for shift in sentiment_shift:
-        social_media = db.SocialMedia.find_one(
-            {"sm_id": shift["sm_id"]}, {"_id": 0, "name": 1}
-        )
-        shift["platform"] = social_media["name"]
-        shift.pop("sm_id")
+        shift["id"] = str(shift["_id"])
+        shift.pop("_id")
 
     return sentiment_shift
 
 
 def update_sentiment_shift_threshold(db: MongoClient, threshold_id: str, sm_id: str, alert_type: str, min_val: int, max_val: int) -> dict:
     updated_threshold = {
-        "SocialMedia_sm_id": sm_id,
+        "sm_id": sm_id,
         "alert_type": alert_type,
         "min_val": min_val,
         "max_val": max_val
