@@ -40,7 +40,8 @@ async def new_campaign(
 @router.get("/campaign_analysis_details", response_model=dict)
 async def campaign_analysis_details(
     db: MongoClient = Depends(get_database),
+    platform: str = Query(..., title="Platform"),
 ):
-    result = get_campaign_analysis_details(db)
+    result = get_campaign_analysis_details(db, platform)
     serialized_data = jsonable_encoder(result)
     return JSONResponse(content=serialized_data, status_code=200)

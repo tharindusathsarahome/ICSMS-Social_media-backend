@@ -75,21 +75,20 @@ def create_campaign(db: MongoClient, post_id: ObjectId) -> str:
     return {"id": str(result.inserted_id)}
 
 
-def get_campaign_analysis_details(db: MongoClient) -> dict:
-    campaign_analysis_collection = db.Campaign
-    post_collection = db.Post
-    post_overview_collection = db.PostOverviewByDate
-    
-    campaigns = list(campaign_analysis_collection.find())
-    
+def get_campaign_analysis_details(db: MongoClient, platform: str) -> dict:
+    posts = db.Post.find({"sm_id": platform})
+    post_ids = [post["_id"] for post in posts]
+
+    campaigns = db.Campaign.find({"post_id": {"$in": post_ids}})
+
     campaign_details = []
     
     for campaign in campaigns:
         post_id = campaign['post_id']
         
-        post_details = post_collection.find_one({'_id': post_id})
+        post_details = db.Post.find_one({'_id': post_id})
         
-        post_overviews = list(post_overview_collection.find({'post_id': post_id}))
+        post_overviews = list(db.PostOverviewByDate.find({'post_id': post_id}))
         
         now = datetime.now()
         last_7_days = [overview for overview in post_overviews if overview['date'] >= now - timedelta(days=7)]
@@ -119,11 +118,7 @@ def get_campaign_analysis_details(db: MongoClient) -> dict:
             "post_url": post_details.get("post_url")
         })
     
-    campaigns_analysis_by_sm = defaultdict(list)
-    for campaign in campaign_details:
-        campaigns_analysis_by_sm[campaign["social_media"]].append(campaign)
-    
-    return dict(campaigns_analysis_by_sm)
+    return campaign_details
 
 
 

@@ -2,8 +2,8 @@
 
 from fastapi.concurrency import run_in_threadpool
 from app.dependencies.mongo_db_authentication import get_database
-from app.dependencies.facebook_authentication import authenticate_with_facebook
-from app.db.facebook_data import fetch_and_store_facebook_data, analyze_and_update_comments, analyze_and_update_subcomments
+from app.dependencies.facebook_authentication import authenticate_with_facebook, authenticate_with_instagram
+from app.db.facebook_data import fetch_and_store_facebook_data, fetch_and_store_instagram_data, analyze_and_update_comments, analyze_and_update_subcomments
 from app.db.campaign_analysis_data import calculate_post_overview_by_date
 
 
@@ -16,6 +16,17 @@ async def run_fetch_and_store_facebook():
         print(result)
     except Exception as e:
         print(f"Error[fetch_and_store_data]: {str(e)}")
+
+
+async def run_fetch_and_store_instagram():
+    print("Running fetch_and_store_instagram")
+    try:
+        db = get_database()
+        graph = await authenticate_with_instagram()
+        result = await run_in_threadpool(fetch_and_store_instagram_data, db, graph)
+        print(result)
+    except Exception as e:
+        print(f"Error[fetch_and_store_instagram]: {str(e)}")
 
 
 async def run_calculate_post_overview_by_date():

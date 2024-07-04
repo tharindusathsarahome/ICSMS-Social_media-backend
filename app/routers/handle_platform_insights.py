@@ -19,11 +19,12 @@ router = APIRouter()
 async def keyword_trend_count_(
     db: MongoClient = Depends(get_database),
     # current_user=Depends(role_required("User")),
+    platform: str = Query(..., title="Platform"),
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):
     try:
-        result = keyword_trend_count(db, startDate, endDate)
+        result = keyword_trend_count(db, platform, startDate, endDate)
         serialized_posts = jsonable_encoder(result)
         return JSONResponse(content=serialized_posts)
     except Exception as e:
@@ -33,11 +34,12 @@ async def keyword_trend_count_(
 @router.get("/total_reactions")
 async def total_reactions_(
     db: MongoClient = Depends(get_database),
+    platform: str = Query(..., title="Platform"),
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):
     try:
-        result = total_reactions(db, startDate, endDate)
+        result = total_reactions(db, platform, startDate, endDate)
         serialized_posts = jsonable_encoder(result)
         return JSONResponse(content=serialized_posts)
     except Exception as e:
@@ -47,11 +49,12 @@ async def total_reactions_(
 @router.get("/total_comments")
 async def total_comments_(
     db: MongoClient = Depends(get_database),
+    platform: str = Query(..., title="Platform"),
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):
     try:
-        result = total_comments(db, startDate, endDate)
+        result = total_comments(db, platform, startDate, endDate)
         serialized_posts = jsonable_encoder(result)
         return JSONResponse(content=serialized_posts)
     except Exception as e:
@@ -61,11 +64,12 @@ async def total_comments_(
 @router.get("/highlighted_comments")
 async def highlighted_comments_(
     db: MongoClient = Depends(get_database),
+    platform: str = Query(..., title="Platform"),
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):
     try:
-        result = highlighted_comments(db, startDate, endDate)
+        result = highlighted_comments(db, platform, startDate, endDate)
         serialized_posts = jsonable_encoder(result)
         return JSONResponse(content=serialized_posts)
     except Exception as e:
@@ -75,11 +79,12 @@ async def highlighted_comments_(
 @router.get("/average_sentiment_score")
 async def average_sentiment_score_(
     db: MongoClient = Depends(get_database),
+    platform: str = Query(..., title="Platform"),
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):
     try:
-        result = average_sentiment_score(db, startDate, endDate)
+        result = average_sentiment_score(db, platform, startDate, endDate)
         serialized_posts = jsonable_encoder(result)
         return JSONResponse(content=serialized_posts)
     except Exception as e:
