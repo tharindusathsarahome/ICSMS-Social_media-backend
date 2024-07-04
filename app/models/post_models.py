@@ -62,3 +62,11 @@ class PostOverviewByDate(BaseModel):
     total_comments: int
     class Config:
         arbitrary_types_allowed = True
+
+class SentimentShift(BaseModel):
+    sm_id: str
+    alert_type: str
+    min_val: int
+    max_val: int
+    class Config:
+        arbitrary_types_allowed = True

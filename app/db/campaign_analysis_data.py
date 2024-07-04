@@ -37,13 +37,13 @@ def create_campaign(db: MongoClient, post_id: ObjectId) -> str:
     comments = list(db.Comment.find({"post_id": post_id}))
     comment_ids = [comment["_id"] for comment in comments]
 
-    comment_sentiments = list(db.commentSentiments.find({"comment_id": {"$in": comment_ids}}))
+    comment_sentiments = list(db.CommentSentiment.find({"comment_id": {"$in": comment_ids}}))
 
 
     sub_comments = list(db.SubComment.find({"comment_id": {"$in": comment_ids}}))
     sub_comment_ids = [sub_comment["_id"] for sub_comment in sub_comments]
 
-    sub_comment_sentiments = list(db.subcommentSentiments.find({"sub_comment_id": {"$in": sub_comment_ids}}))
+    sub_comment_sentiments = list(db.SubCommentSentiment.find({"sub_comment_id": {"$in": sub_comment_ids}}))
 
 
     sentiment_by_date = defaultdict(list)
@@ -155,12 +155,12 @@ def update_campaigns(db: MongoClient) -> str:
         comments = list(db.Comment.find({"post_id": post_id}))
         comment_ids = [comment["_id"] for comment in comments]
 
-        comment_sentiments = list(db.commentSentiments.find({"comment_id": {"$in": comment_ids}}))
+        comment_sentiments = list(db.CommentSentiment.find({"comment_id": {"$in": comment_ids}}))
 
         sub_comments = list(db.SubComment.find({"comment_id": {"$in": comment_ids}}))
         sub_comment_ids = [sub_comment["_id"] for sub_comment in sub_comments]
 
-        sub_comment_sentiments = list(db.subcommentSentiments.find({"sub_comment_id": {"$in": sub_comment_ids}}))
+        sub_comment_sentiments = list(db.SubCommentSentiment.find({"sub_comment_id": {"$in": sub_comment_ids}}))
 
         sentiment_by_date = defaultdict(list)
 

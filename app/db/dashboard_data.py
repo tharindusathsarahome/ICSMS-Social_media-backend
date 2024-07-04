@@ -157,7 +157,7 @@ def get_setiment_percentage(db:MongoClient,start_date:str,end_date:str):
     comment_sentiment_threshold = 0.7
     sub_comment_sentiment_threshold = 0.4
 
-    cursor_Comments = db.commentSentiments.find(
+    cursor_Comments = db.CommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime}}, 
         {"s_score": 1})
     
@@ -170,7 +170,7 @@ def get_setiment_percentage(db:MongoClient,start_date:str,end_date:str):
         else:
             positive += 1
 
-    cursor_sub_comments = db.subcommentSentiments.find(
+    cursor_sub_comments = db.SubCommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime}}, 
         {"s_score": 1})
 
@@ -208,7 +208,7 @@ def get_sentimentscore_facebook(db:MongoClient,start_date:str,end_date:str):
     comment_sentiment_threshold = 0.7
     sub_comment_sentiment_threshold = 0.4
 
-    cursor_Comments = db.commentSentiments.find(
+    cursor_Comments = db.CommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime},
          "sm_id":"SM01"}, 
         {"s_score": 1})
@@ -218,7 +218,7 @@ def get_sentimentscore_facebook(db:MongoClient,start_date:str,end_date:str):
     total_coment_score = sum(doc["s_score"]*comment_sentiment_threshold for doc in cursor_Comments)
 
 
-    cursor_sub_comments = db.subcommentSentiments.find(
+    cursor_sub_comments = db.SubCommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime},
          "sm_id":"SM01"}, 
         {"s_score": 1})
@@ -248,7 +248,7 @@ def get_sentimentscore_instagram(db:MongoClient,start_date:str,end_date:str):
     comment_sentiment_threshold = 0.7
     sub_comment_sentiment_threshold = 0.4
 
-    cursor_Comments = db.commentSentiments.find(
+    cursor_Comments = db.CommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime},
          "sm_id":"SM02"}, 
         {"s_score": 1})
@@ -258,7 +258,7 @@ def get_sentimentscore_instagram(db:MongoClient,start_date:str,end_date:str):
     total_coment_score = sum(doc["s_score"]*comment_sentiment_threshold for doc in cursor_Comments)
     
 
-    cursor_sub_comments = db.subcommentSentiments.find(
+    cursor_sub_comments = db.SubCommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime},
          "sm_id":"SM02"}, 
         {"s_score": 1})
