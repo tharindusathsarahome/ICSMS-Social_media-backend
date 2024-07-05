@@ -3,8 +3,8 @@
 from fastapi.concurrency import run_in_threadpool
 from app.dependencies.mongo_db_authentication import get_database
 from app.dependencies.facebook_authentication import authenticate_with_facebook, authenticate_with_instagram
-from app.db.facebook_data import fetch_and_store_facebook_data, fetch_and_store_instagram_data, analyze_and_update_comments, analyze_and_update_subcomments
-from app.db.campaign_analysis_data import calculate_post_overview_by_date
+from app.database.facebook_data import fetch_and_store_facebook_data, fetch_and_store_instagram_data, analyze_and_update_comments, analyze_and_update_subcomments
+from app.database.campaign_analysis_data import calculate_post_overview_by_date
 
 
 async def run_fetch_and_store_facebook():

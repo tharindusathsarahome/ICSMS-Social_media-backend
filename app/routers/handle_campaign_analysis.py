@@ -12,7 +12,7 @@ from pymongo.mongo_client import MongoClient
 
 from app.models.product_keyword_models import FilteredKeywordsByDate
 from app.dependencies.mongo_db_authentication import get_database
-from app.db.campaign_analysis_data import (
+from app.database.campaign_analysis_data import (
     check_adding_campaign,
     get_campaign_analysis_details
     )

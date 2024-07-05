@@ -2,7 +2,7 @@
 
 from pymongo import MongoClient
 from typing import List, Dict
-from app.db.notification_data import add_notification
+from app.database.notification_data import add_notification
 
 
 def send_alerts_push_notifications(db: MongoClient, alerts_within_range: List[Dict]) -> None:

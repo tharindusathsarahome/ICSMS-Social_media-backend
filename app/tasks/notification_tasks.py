@@ -2,7 +2,7 @@
 
 from fastapi.concurrency import run_in_threadpool
 from app.dependencies.mongo_db_authentication import get_database
-from app.db.notification_alert_data import check_product_alerts, check_sentiment_shifts
+from app.database.notification_alert_data import check_product_alerts, check_sentiment_shifts
 from app.services.notification_service import send_alerts_push_notifications, send_sentiment_shift_push_notifications
 
 

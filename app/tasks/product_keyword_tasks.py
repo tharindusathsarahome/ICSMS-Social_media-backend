@@ -2,7 +2,7 @@
 
 from fastapi.concurrency import run_in_threadpool
 from app.dependencies.mongo_db_authentication import get_database
-from app.db.products_keywords_data import add_identified_products, add_identified_keywords
+from app.database.products_keywords_data import add_identified_products, add_identified_keywords
 
 
 async def run_add_identified_products():

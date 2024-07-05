@@ -5,8 +5,8 @@ from fastapi.responses import JSONResponse
 from pymongo.mongo_client import MongoClient
 from fastapi.encoders import jsonable_encoder
 
-from app.db.dashboard_data import get_facebook_analysis_data
-from app.db.dashboard_data import get_products_trend_data,get_keyword_trend_data,get_setiment_percentage,get_instagram_analysis_data,get_sentimentscore_facebook,get_sentimentscore_instagram
+from app.database.dashboard_data import get_facebook_analysis_data
+from app.database.dashboard_data import get_products_trend_data,get_keyword_trend_data,get_setiment_percentage,get_instagram_analysis_data,get_sentimentscore_facebook,get_sentimentscore_instagram
 from app.dependencies.mongo_db_authentication import get_database
 
 router = APIRouter()

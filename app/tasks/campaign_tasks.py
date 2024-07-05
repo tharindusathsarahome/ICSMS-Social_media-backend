@@ -2,7 +2,7 @@
 
 from fastapi.concurrency import run_in_threadpool
 from app.dependencies.mongo_db_authentication import get_database
-from app.db.campaign_analysis_data import update_campaigns
+from app.database.campaign_analysis_data import update_campaigns
 
 
 async def run_update_campaigns():
