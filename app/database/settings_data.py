@@ -5,6 +5,8 @@ from pymongo import MongoClient
 from collections import defaultdict 
 
 from app.models.product_keyword_models import ProductAlert
+from app.models.campaign_models import Campaign
+from app.models.notification_settings_model import NotificationSettings
 from app.utils.common import convert_s_score_to_color
 
 
@@ -193,3 +195,41 @@ def delete_sentiment_shift_threshold(db: MongoClient, threshold_id: str) -> bool
     if result.deleted_count == 0:
         raise ValueError("Sentiment shift threshold not found or deletion failed")
     return True
+
+
+# Notification Settings
+
+# Initialize default settings
+def initialize_default_settings(db: MongoClient):
+    default_notification_settings = {
+        "dashboard_notifications": False,
+        "email_notifications": False,
+        "notification_emails": []
+    }
+
+    if db.NotificationSettings.count_documents({}) == 0:
+        db.NotificationSettings.insert_one(default_notification_settings)
+        
+def get_notification_settings(db: MongoClient) -> dict:
+    settings = db.NotificationSettings.find_one({})
+    if not settings:
+        initialize_default_settings(db)
+        settings = db.NotificationSettings.find_one({})
+    settings["_id"] = str(settings["_id"])
+    return settings
+
+
+def update_notification_settings(db: MongoClient, settings: NotificationSettings) -> dict:
+    updated_settings = {
+        "dashboard_notifications": settings.dashboard_notifications,
+        "email_notifications": settings.email_notifications,
+        "notification_emails": settings.notification_emails
+    }
+
+    result = db.NotificationSettings.update_one(
+        {},
+        {"$set": updated_settings},
+        upsert=True
+    )
+
+    return get_notification_settings(db)
