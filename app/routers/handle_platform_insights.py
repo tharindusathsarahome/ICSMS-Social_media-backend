@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 
 from app.dependencies.mongo_db_authentication import get_database
 from app.dependencies.user_authentication import role_required
-from app.db.platform_insights_data import keyword_trend_count, total_reactions, total_comments, highlighted_comments, average_sentiment_score
+from app.database.platform_insights_data import keyword_trend_count, total_reactions, total_comments, highlighted_comments, average_sentiment_score
 import json
 
 router = APIRouter()

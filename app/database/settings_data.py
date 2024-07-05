@@ -4,8 +4,8 @@ from bson import ObjectId
 from pymongo import MongoClient
 from collections import defaultdict 
 
-from app.models.campaign_models import Campaign
 from app.models.notification_settings_model import NotificationSettings
+from app.models.product_keyword_models import ProductAlert
 from app.utils.common import convert_s_score_to_color
 
 
@@ -52,7 +52,7 @@ def add_product_alert(db: MongoClient, product: str, alert_type: str, min_val: i
     if not identified_product:
         raise ValueError("Product not found")
     
-    product_id = str(identified_product["_id"])
+    product_id = identified_product["_id"]
 
     existing_alert = db.ProductAlert.find_one({
         "product_id": product_id,
@@ -62,14 +62,14 @@ def add_product_alert(db: MongoClient, product: str, alert_type: str, min_val: i
     if existing_alert:
         raise ValueError("Product alert with the same product and alert type already exists")
 
-    new_alert = {
-        "product_id": product_id,
-        "alert_type": alert_type,
-        "min_val": min_val,
-        "max_val": max_val
-    }
+    new_alert = ProductAlert(
+        product_id=product_id,
+        alert_type=alert_type,
+        min_val=min_val,
+        max_val=max_val
+    )
     
-    result = db.ProductAlert.insert_one(new_alert)
+    result = db.ProductAlert.insert_one(new_alert.model_dump())
     return {"id": str(result.inserted_id)}
 
 def get_product_alert_by_id(db: MongoClient, alert_id: str) -> dict:
@@ -77,7 +77,7 @@ def get_product_alert_by_id(db: MongoClient, alert_id: str) -> dict:
     if not alert:
         raise ValueError("Product alert not found")
     alert["product"] = db.IdentifiedProducts.find_one(
-        {"_id": ObjectId(alert["product_id"])}, {"_id": 0, "identified_product": 1, "sm_id":1}
+        {"_id": alert["product_id"]}, {"_id": 0, "identified_product": 1, "sm_id":1}
     )["identified_product"]
     alert["id"] = str(alert["_id"])
     alert.pop("_id")
@@ -88,7 +88,7 @@ def get_all_product_alerts(db: MongoClient) -> list:
     product_alerts = list(db.ProductAlert.find({}, {"_id": 0}))
     for alert in product_alerts:
         product = db.IdentifiedProducts.find_one(
-            {"_id": ObjectId(alert["product_id"])}, {"_id": 0, "identified_product": 1}
+            {"_id": alert["product_id"]}, {"_id": 0, "identified_product": 1}
         )
         alert["product"] = product["identified_product"]
         alert.pop("product_id")

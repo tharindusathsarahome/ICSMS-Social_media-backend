@@ -15,6 +15,9 @@ from app.services.sentiment_analysis_service import analyze_sentiment
 def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
     posts = graph.get_object('me/posts', fields='id,message,created_time,from,likes.summary(true),comments.summary(true),full_picture,shares,permalink_url,is_popular')
 
+    commentsFetched = 0
+    subCommentsFetched = 0
+
     for post in posts['data']:
         if 'message' and 'full_picture' not in post:
             continue
@@ -54,6 +57,7 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
 
             if db.Comment.find_one({"sm_comment_id": comment['id']}) is None:
                 db.Comment.insert_one(comment_model.model_dump())
+                commentsFetched += 1
             db_comment_id = db.Comment.find_one({"sm_comment_id": comment['id']})['_id']
 
             for sub_comment in comment['comments']['data']:
@@ -69,12 +73,16 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
                 
                 if db.SubComment.find_one({"comment_id": db_comment_id, "description": sub_comment['message']}) is None:
                     db.SubComment.insert_one(sub_comment_model.model_dump())
+                    subCommentsFetched += 1
 
-    return "Data fetched and stored successfully."
+    return f"Data fetched and stored successfully. Comments: {commentsFetched}, Subcomments: {subCommentsFetched}"
 
 
 def fetch_and_store_instagram_data(db: MongoClient, graph: GraphAPI):
     accounts = graph.get_object('me/accounts', fields='connected_instagram_account')
+
+    commentsFetched = 0
+    subCommentsFetched = 0
 
     for account in accounts['data']:
         if 'connected_instagram_account' not in account:
@@ -121,6 +129,7 @@ def fetch_and_store_instagram_data(db: MongoClient, graph: GraphAPI):
 
                 if db.Comment.find_one({"sm_comment_id": comment['id']}) is None:
                     db.Comment.insert_one(comment_model.model_dump())
+                    commentsFetched += 1
                 db_comment_id = db.Comment.find_one({"sm_comment_id": comment['id']})['_id']
 
                 if 'replies' in comment:
@@ -134,15 +143,18 @@ def fetch_and_store_instagram_data(db: MongoClient, graph: GraphAPI):
 
                         if db.SubComment.find_one({"comment_id": db_comment_id, "description": sub_comment['text']}) is None:
                             db.SubComment.insert_one(sub_comment_model.model_dump())
+                            subCommentsFetched += 1
 
-    return "Data fetched and stored successfully."
+    return f"Data fetched and stored successfully. Comments: {commentsFetched}, Subcomments: {subCommentsFetched}"
 
 
 def analyze_and_update_comments(db: MongoClient):
     all_comments = db.Comment.find()
 
+    anylyzed_comments = 0
+
     for comment in all_comments:
-        if db.commentSentiments.find_one({"comment_id": comment['_id']}) is not None:
+        if db.CommentSentiment.find_one({"comment_id": comment['_id']}) is not None:
             continue
 
         post = db.Post.find_one({"_id": comment['post_id']})
@@ -159,16 +171,19 @@ def analyze_and_update_comments(db: MongoClient):
             date_calculated=datetime.now()
         )
 
-        db.commentSentiments.insert_one(comment_sentiment.model_dump())
+        db.CommentSentiment.insert_one(comment_sentiment.model_dump())
+        anylyzed_comments += 1
     
-    return "Sentiment analysis for comments completed."
+    return f"Sentiment analysis for comments completed. Analyzed: {anylyzed_comments}"
 
 
 def analyze_and_update_subcomments(db: MongoClient):
     all_subcomments = db.SubComment.find()
 
+    anylyzed_subcomments = 0
+
     for subcomment in all_subcomments:
-        if db.subcommentSentiments.find_one({"sub_comment_id": subcomment['_id']}) is not None:
+        if db.SubCommentSentiment.find_one({"sub_comment_id": subcomment['_id']}) is not None:
             continue
 
         comment = db.Comment.find_one({"_id": subcomment['comment_id']})
@@ -189,6 +204,7 @@ def analyze_and_update_subcomments(db: MongoClient):
             date_calculated=datetime.now()
         )
 
-        db.subcommentSentiments.insert_one(subcomment_sentiment.model_dump())
+        db.SubCommentSentiment.insert_one(subcomment_sentiment.model_dump())
+        anylyzed_subcomments += 1
     
-    return "Sentiment analysis for subcomments completed."
+    return f"Sentiment analysis for subcomments completed. Analyzed: {anylyzed_subcomments}"

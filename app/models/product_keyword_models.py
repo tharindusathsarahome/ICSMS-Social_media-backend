@@ -39,3 +39,11 @@ class IdentifiedKeywords(BaseModel):
     date:datetime
     class Config:
         arbitrary_types_allowed = True
+
+class ProductAlert(BaseModel):
+    product_id: ObjectId
+    alert_type: str
+    min_val: int
+    max_val: int
+    class Config:
+        arbitrary_types_allowed = True
