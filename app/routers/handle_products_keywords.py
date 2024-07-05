@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 
 from app.dependencies.mongo_db_authentication import get_database
-from app.db.products_keywords_data import add_custom_products, get_custom_products, get_identified_products, get_identified_products_by_date
+from app.database.products_keywords_data import add_custom_products, get_custom_products, get_identified_products, get_identified_products_by_date
 import json
 
 router = APIRouter()

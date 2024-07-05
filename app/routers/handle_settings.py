@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 
 from app.dependencies.mongo_db_authentication import get_database
 from app.dependencies.user_authentication import role_required
-from app.db.settings_data import (
+from app.database.settings_data import (
     get_campaigns,
     delete_campaign, 
     add_product_alert, 
