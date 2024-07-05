@@ -4,11 +4,11 @@ from bson import ObjectId
 from pymongo import MongoClient
 from collections import defaultdict 
 
-from app.models.notification_settings_model import NotificationSettings
 from app.models.product_keyword_models import ProductAlert
+from app.models.campaign_models import Campaign
+from app.models.notification_settings_model import NotificationSettings
+
 from app.utils.common import convert_s_score_to_color
-
-
 
 # Setting - Campaigns
 
