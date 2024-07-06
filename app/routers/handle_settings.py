@@ -21,9 +21,14 @@ from app.database.settings_data import (
     get_sentiment_shift_threshold_by_id, 
     get_sentiment_shift_threshold, 
     update_sentiment_shift_threshold, 
-    delete_sentiment_shift_threshold
+    delete_sentiment_shift_threshold,
+    get_notification_settings,
+    update_notification_settings,
+    initialize_default_settings
 )
 import json
+
+from app.models.notification_settings_model import NotificationSettings
 
 router = APIRouter()
 
@@ -212,3 +217,21 @@ async def delete_sentiment_shift_threshold_(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error[delete_sentiment_shift_threshold]: {str(e)}")
+
+
+# Notification settings endpoints
+@router.get("/settings/notifications", response_model=NotificationSettings)
+async def read_notification_settings(db: MongoClient = Depends(get_database)):
+    try:
+        settings = get_notification_settings(db)
+        return settings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error[get_notification_settings]: {str(e)}")
+
+@router.put("/settings/notifications", response_model=NotificationSettings)
+async def update_notification_settings_endpoint(settings: NotificationSettings = Body(...), db: MongoClient = Depends(get_database)):
+    try:
+        updated_settings = update_notification_settings(db, settings)
+        return updated_settings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error[update_notification_settings]: {str(e)}")
