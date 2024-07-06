@@ -77,12 +77,12 @@ async def analyze_sentiment(
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):
-    # try:
+    try:
         sentiment_analysis_data =  get_setiment_percentage(db,startDate,endDate)
         return sentiment_analysis_data
 
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     
 
 @router.get("/sentimentscore_facebook")
