@@ -16,3 +16,7 @@ def add_notification(db: MongoClient, title: str, description: str) -> None:
     result = db.Notification.insert_one(new_notification.model_dump())
 
     return {"Notification Added": str(result.inserted_id)}
+
+def get_mail_list(db: MongoClient) -> list:
+    notification_emails = db.NotificationSettings.find_one()
+    return notification_emails["notification_emails"]
