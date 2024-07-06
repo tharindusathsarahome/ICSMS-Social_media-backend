@@ -176,7 +176,7 @@ def get_setiment_percentage(db:MongoClient,start_date:str,end_date:str):
 
     for doc in cursor_sub_comments:
         sentiment_result = doc['s_score'] * sub_comment_sentiment_threshold
-        if sentiment_result <= -0.7:
+        if sentiment_result <= -0.3:
             negative += 1
         elif sentiment_result < 0.3:
             neutral += 1
