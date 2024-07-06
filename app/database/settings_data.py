@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from app.models.product_keyword_models import ProductAlert
 from app.models.campaign_models import Campaign
-from app.models.notification_settings_model import NotificationSettings
+from app.models.notification_models import NotificationSettings
 from app.utils.common import convert_s_score_to_color
 
 
@@ -22,7 +22,8 @@ def get_campaigns(db: MongoClient) -> list:
         campaign["s_score"] = round((campaign["s_score_arr"][-1] + 1) / 2, 1)
         campaign["company"] = post["author"]
         campaign["color"] = convert_s_score_to_color(campaign["s_score_arr"][-1])
-        campaign["_id"] = str(campaign["_id"])
+        campaign["id"] = str(campaign["_id"])
+        campaign.pop("_id")
         campaign.pop("post_id")
         campaign.pop("s_score_arr")
 
@@ -35,15 +36,12 @@ def get_campaigns(db: MongoClient) -> list:
 
 
 def delete_campaign(db: MongoClient, campaign_id: str) -> dict:
-    try:
-        result = db.Campaign.delete_one({"_id": ObjectId(campaign_id)})
+    result = db.Campaign.delete_one({"_id": ObjectId(campaign_id)})
+    
+    if result.deleted_count == 0:
+        raise ValueError("Campaign not found or deletion failed")
         
-        if result.deleted_count == 1:
-            return {"status": "success", "message": "Campaign deleted successfully."}
-        else:
-            return {"status": "failure", "message": "Campaign not found."}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    return True
 
 
 #settings-alerts
@@ -86,23 +84,39 @@ def get_product_alert_by_id(db: MongoClient, alert_id: str) -> dict:
     return alert
 
 def get_all_product_alerts(db: MongoClient) -> list:
-    product_alerts = list(db.ProductAlert.find({}, {"_id": 0}))
+    product_alerts = list(db.ProductAlert.find({}))
     for alert in product_alerts:
         product = db.IdentifiedProducts.find_one(
             {"_id": alert["product_id"]}, {"_id": 0, "identified_product": 1}
         )
         alert["product"] = product["identified_product"]
+        alert["id"] = str(alert["_id"])
+        alert.pop("_id")
         alert.pop("product_id")
     return product_alerts
 
 def update_product_alert(db: MongoClient, alert_id: str, alert_type: str, min_val: int, max_val: int) -> dict:
+    alert_oid = ObjectId(alert_id)
     existing_alert = db.ProductAlert.find_one({
-        "_id": ObjectId(alert_id)
+        "_id": alert_oid
     })
-    
+
     if not existing_alert:
         raise ValueError("Product alert not found")
     
+    if not existing_alert["alert_type"] == alert_type:
+
+        identified_product = db.IdentifiedProducts.find_one({"_id": existing_alert["product_id"]}, {"_id": 1})
+
+        same_alert = db.ProductAlert.find_one({
+            "_id": {"$ne": alert_oid},
+            "product_id": identified_product["_id"],
+            "alert_type": alert_type
+        })
+        
+        if same_alert:
+            raise ValueError("Product alert with the same product and alert type already exists")
+
     updated_alert = {
         "alert_type": alert_type,
         "min_val": min_val,
@@ -110,14 +124,15 @@ def update_product_alert(db: MongoClient, alert_id: str, alert_type: str, min_va
     }
 
     result = db.ProductAlert.update_one(
-        {"_id": ObjectId(alert_id)},
+        {"_id": alert_oid},
         {"$set": updated_alert}
     )
 
     if result.matched_count == 0:
         raise ValueError("Product alert not found or update failed")
     
-    result = db.ProductAlert.find_one({"_id": ObjectId(alert_id)}, {"_id": 0})
+    result = db.ProductAlert.find_one({"_id": alert_oid}, {"_id": 0})
+    result["product_id"] = str(result["product_id"])
 
     return result
 
@@ -170,6 +185,14 @@ def get_sentiment_shift_threshold(db: MongoClient) -> list:
 
 
 def update_sentiment_shift_threshold(db: MongoClient, threshold_id: str, sm_id: str, alert_type: str, min_val: int, max_val: int) -> dict:
+    existing_threshold = db.SentimentShift.find_one({
+        "sm_id": sm_id,
+        "alert_type": alert_type
+    })
+    
+    if existing_threshold and existing_threshold["_id"] != ObjectId(threshold_id):
+        raise ValueError("Sentiment shift threshold with the same platform and alert type already exists")
+    
     updated_threshold = {
         "sm_id": sm_id,
         "alert_type": alert_type,
@@ -201,11 +224,11 @@ def delete_sentiment_shift_threshold(db: MongoClient, threshold_id: str) -> bool
 
 # Initialize default settings
 def initialize_default_settings(db: MongoClient):
-    default_notification_settings = {
-        "dashboard_notifications": False,
-        "email_notifications": False,
-        "notification_emails": []
-    }
+    default_notification_settings = NotificationSettings(
+        dashboard_notifications= False,
+        email_notifications= False,
+        notification_emails= []
+    )
 
     if db.NotificationSettings.count_documents({}) == 0:
         db.NotificationSettings.insert_one(default_notification_settings)
@@ -219,17 +242,17 @@ def get_notification_settings(db: MongoClient) -> dict:
     return settings
 
 
-def update_notification_settings(db: MongoClient, settings: NotificationSettings) -> dict:
-    updated_settings = {
-        "dashboard_notifications": settings.dashboard_notifications,
-        "email_notifications": settings.email_notifications,
-        "notification_emails": settings.notification_emails
-    }
+def update_notification_settings(db: MongoClient, settings: dict) -> dict:
+    print(settings)
+    updated_settings = NotificationSettings(
+        dashboard_notifications= settings["dashboard_notifications"],
+        email_notifications= settings["email_notifications"],
+        notification_emails= settings["notification_emails"]
+    )
 
-    result = db.NotificationSettings.update_one(
+    db.NotificationSettings.update_one(
         {},
-        {"$set": updated_settings},
-        upsert=True
+        {"$set": updated_settings.model_dump()}
     )
 
     return get_notification_settings(db)
