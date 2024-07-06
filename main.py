@@ -20,7 +20,6 @@ app = FastAPI(title="Social Media API", description="API for Social Media Analys
 origins = [
     "http://localhost",
     "http://localhost:4200",
-    "http://icsms-dashboard.s3-website.ap-south-1.amazonaws.com",
 ]
 
 app.add_middleware(

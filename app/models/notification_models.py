@@ -1,6 +1,6 @@
 # app\models\notification_models.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import List
 
@@ -13,8 +13,8 @@ class Notification(BaseModel):
         arbitrary_types_allowed = True
 
 class NotificationSettings(BaseModel):
-    pushNotification: bool
-    emailNotification: bool
-    emailsList: List[str]
+    dashboard_notifications: bool
+    email_notifications: bool
+    notification_emails: List[EmailStr]
     class Config:
         arbitrary_types_allowed = True
