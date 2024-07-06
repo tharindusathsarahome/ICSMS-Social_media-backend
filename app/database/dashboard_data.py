@@ -184,6 +184,12 @@ def get_setiment_percentage(db:MongoClient,start_date:str,end_date:str):
             positive += 1
 
     total_count = negative+neutral+positive
+    
+    if total_count == 0:
+        return {
+            "labels":['Negative','Neutral', 'Positive'],
+            "percentage":[0,0,0]
+        }
 
     negative_percent = (negative/total_count)*100
     neutral_percent = (neutral/total_count)*100
