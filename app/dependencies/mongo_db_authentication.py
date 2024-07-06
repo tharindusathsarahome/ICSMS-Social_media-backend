@@ -4,6 +4,8 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from app.core.config import MONGODB_URI, MONGODB_DB
 
+client = None
+
 def connect_to_mongo():
     """
     Create MongoDB database client.
