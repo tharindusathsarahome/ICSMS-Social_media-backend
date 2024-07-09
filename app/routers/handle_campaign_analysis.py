@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from pymongo.mongo_client import MongoClient
 
-from app.models.product_keyword_models import FilteredKeywordsByDate
+from app.schemas.product_keyword_schemas import FilteredKeywordsByDate
 from app.dependencies.mongo_db_authentication import get_database
 from app.database.campaign_analysis_data import (
     check_adding_campaign,

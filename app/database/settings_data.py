@@ -4,9 +4,9 @@ from bson import ObjectId
 from pymongo import MongoClient
 from collections import defaultdict 
 
-from app.models.product_keyword_models import ProductAlert
-from app.models.campaign_models import Campaign
-from app.models.notification_models import NotificationSettings
+from app.schemas.product_keyword_schemas import ProductAlert
+from app.schemas.campaign_schemas import Campaign
+from app.schemas.notification_schemas import NotificationSettings
 from app.utils.common import convert_s_score_to_color
 
 

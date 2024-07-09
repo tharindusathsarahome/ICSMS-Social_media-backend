@@ -3,7 +3,7 @@ from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 from collections import defaultdict
-from app.models.product_keyword_models import CustomProducts, IdentifiedProducts, IdentifiedKeywords
+from app.schemas.product_keyword_schemas import CustomProducts, IdentifiedProducts, IdentifiedKeywords
 from app.services.products_keywords_service import identify_products,identify_keywords
 from fastapi import HTTPException
 

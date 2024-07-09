@@ -5,7 +5,7 @@ from datetime import datetime
 from facebook import GraphAPI
 
 
-from app.models.post_models import Post, Comment, SubComment, CommentSentiment, SubCommentSentiment
+from app.schemas.post_schemas import Post, Comment, SubComment, CommentSentiment, SubCommentSentiment
 from app.services.sentiment_analysis_service import analyze_sentiment
 
 

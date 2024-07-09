@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.models.user_models import TokenPayload
+from app.schemas.user_schemas import TokenPayload
 from app.utils.auth import decode_jwt
 
 
