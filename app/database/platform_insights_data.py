@@ -4,7 +4,7 @@ from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 
-from app.models.post_models import Post, Comment, SubComment
+from app.schemas.post_schemas import Post, Comment, SubComment
 from app.utils.common import convert_s_score_to_color
 
 

@@ -5,8 +5,8 @@ from typing import List
 from collections import defaultdict 
 from bson import ObjectId
 from pymongo import MongoClient
-from app.models.post_models import PostOverviewByDate
-from app.models.campaign_models import Campaign
+from app.schemas.post_schemas import PostOverviewByDate
+from app.schemas.campaign_schemas import Campaign
 from fastapi import HTTPException
 from app.utils.common import convert_s_score_to_color
 import re

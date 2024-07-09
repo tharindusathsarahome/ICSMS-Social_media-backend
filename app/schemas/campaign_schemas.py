@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 from bson import ObjectId
-from app.models.post_models import Post
+from app.schemas.post_schemas import Post
 
 
 class Campaign(BaseModel):

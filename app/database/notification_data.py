@@ -2,7 +2,7 @@
 
 from pymongo import MongoClient
 from datetime import datetime
-from app.models.notification_models import Notification
+from app.schemas.notification_schemas import Notification
 
 
 def add_notification(db: MongoClient, title: str, description: str) -> None:
