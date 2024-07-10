@@ -20,3 +20,7 @@ def add_notification(db: MongoClient, title: str, description: str) -> None:
 def get_mail_list(db: MongoClient) -> list:
     notification_emails = db.NotificationSettings.find_one()
     return notification_emails["notification_emails"]
+
+def check_notification_settings(db: MongoClient) -> bool:
+    notification_emails = db.NotificationSettings.find_one()
+    return {"app" : notification_emails["dashboard_notifications"], "email": notification_emails["email_notifications"]}

@@ -23,12 +23,12 @@ async def keyword_trend_count_(
     startDate: str = Query(..., title="Start Date"),
     endDate: str = Query(..., title="End Date")
 ):
-    try:
+    # try:
         result = keyword_trend_count(db, platform, startDate, endDate)
         serialized_posts = jsonable_encoder(result)
         return JSONResponse(content=serialized_posts)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error[Keyword Trend Count]: {str(e)}")
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=f"Error[Keyword Trend Count]: {str(e)}")
 
 
 @router.get("/total_reactions")

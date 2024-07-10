@@ -2,6 +2,7 @@
 
 from pymongo import MongoClient
 from app.services.llm_integration_service import get_gemini_chat, get_gemini_response
+import re
 
 
 # products identification
@@ -18,9 +19,10 @@ def identify_products(facebook_post_description: str, db: MongoClient):
 
     chat = get_gemini_chat()
 
-    message = f"This is a Facebook post description: '{facebook_post_description}'.\n Give me a ',' separated list string of products mentioned in this post. Give the mainly identified Products. Not sub Products or partially mentioned Products. And Do not provide anything else."
+    message = f"This is a Facebook post description: '{facebook_post_description}'.\n Give me a ',' separated list string of products mentioned in this post. Give the mainly identified Products. Not sub Products or partially mentioned Products. Also, product should be as one name. (eg: Chat GPT -> ChatGPT, Vertex AI -> VertexAI) And Do not provide anything else."
 
     response = get_gemini_response(chat, message)
+    print(response)
 
     potential_products = []
     for word in response.split(','):
@@ -51,10 +53,13 @@ def identify_keywords(facebook_post_description:str,db:MongoClient):
     message = f"This is a facebook Post Description:'{facebook_post_description}.\n Give me a ',' separated String list of Hashtags mentioned in this post. Give the mainly identified Hashtags. And Do not provide anything else."
 
     response = get_gemini_response(chat,message)
-    # return response.split(',')
 
     keywords = []
     for word in response.split(','):
-        keywords.append(word.strip().lower())
+        keyword = word.strip().lower()
+        if re.match(r'^#[a-z0-9]+$', keyword):
+            keywords.append(keyword)
+        else:
+            pass
 
     return keywords

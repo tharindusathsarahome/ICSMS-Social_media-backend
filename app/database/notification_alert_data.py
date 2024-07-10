@@ -13,50 +13,53 @@ def check_product_alerts(db: MongoClient) -> List[Dict]:
     product_alerts = list(db.ProductAlert.find({}))
 
     for product_alert in product_alerts:
-        identified_product = db.IdentifiedProducts.find_one({"_id": product_alert['product_id']})
-        if not identified_product:
-            continue
+        productItem = db.IdentifiedProducts.find_one({"_id": product_alert['product_id']})
 
-        sm_id = identified_product["sm_id"]
-        post_id = identified_product["post_id"]
-        identified_product_name = identified_product["identified_product"]
+        identified_products = list(db.IdentifiedProducts.find({"identified_product": productItem['identified_product']}))
+        total_product_sentiments = []
 
-        post = db.Post.find_one({"_id": post_id})
-        if not post:
-            continue
+        for identified_product in identified_products:
+            sm_id = identified_product["sm_id"]
+            post_id = identified_product["post_id"]
+            identified_product_name = identified_product["identified_product"]
 
-        comments = list(db.Comment.find({"post_id": post_id}))
-        comment_ids = [comment["_id"] for comment in comments]
+            post = db.Post.find_one({"_id": post_id})
+            if not post:
+                continue
 
-        comment_sentiments = list(db.CommentSentiment.find({"comment_id": {"$in": comment_ids}}))
+            comments = list(db.Comment.find({"post_id": post_id}))
+            comment_ids = [comment["_id"] for comment in comments]
 
-        sub_comments = list(db.SubComment.find({"comment_id": {"$in": comment_ids}}))
-        sub_comment_ids = [sub_comment["_id"] for sub_comment in sub_comments]
+            comment_sentiments = list(db.CommentSentiment.find({"comment_id": {"$in": comment_ids}}))
 
-        sub_comment_sentiments = list(db.SubCommentSentiment.find({"sub_comment_id": {"$in": sub_comment_ids}}))
+            sub_comments = list(db.SubComment.find({"comment_id": {"$in": comment_ids}}))
+            sub_comment_ids = [sub_comment["_id"] for sub_comment in sub_comments]
 
-        sentiment_by_date = defaultdict(list)
+            sub_comment_sentiments = list(db.SubCommentSentiment.find({"sub_comment_id": {"$in": sub_comment_ids}}))
 
-        for comment in comments:
-            comment_id = comment["_id"]
-            comment_date = comment["date"].date()
-            sentiment = next((cs["s_score"] for cs in comment_sentiments if cs["comment_id"] == comment_id), 0)
-            sentiment_by_date[comment_date].append(sentiment)
+            sentiment_by_date = defaultdict(list)
 
-        for sub_comment in sub_comments:
-            sub_comment_id = sub_comment["_id"]
-            sub_comment_date = sub_comment["date"].date()
-            sentiment = next((scs["s_score"] for scs in sub_comment_sentiments if scs["sub_comment_id"] == sub_comment_id), 0)
-            sentiment_by_date[sub_comment_date].append(sentiment)
+            for comment in comments:
+                comment_id = comment["_id"]
+                comment_date = comment["date"].date()
+                sentiment = next((cs["s_score"] for cs in comment_sentiments if cs["comment_id"] == comment_id), 0)
+                sentiment_by_date[comment_date].append(sentiment * comment_sentiment_threshold)
 
-        avg_sentiment_by_date = {}
-        for date, sentiments in sentiment_by_date.items():
-            avg_sentiment_by_date[date] = sum(sentiments) / len(sentiments)
+            for sub_comment in sub_comments:
+                sub_comment_id = sub_comment["_id"]
+                sub_comment_date = sub_comment["date"].date()
+                sentiment = next((scs["s_score"] for scs in sub_comment_sentiments if scs["sub_comment_id"] == sub_comment_id), 0)
+                sentiment_by_date[sub_comment_date].append(sentiment * sub_comment_sentiment_threshold)
 
-        sorted_dates = sorted(avg_sentiment_by_date.keys())
-        s_score_arr = [avg_sentiment_by_date[date] for date in sorted_dates]
+            avg_sentiment_by_date = {}
+            for date, sentiments in sentiment_by_date.items():
+                avg_sentiment_by_date[date] = sum(sentiments) / len(sentiments)
 
-        total_sentiment_score = s_score_arr[-1]*10 if s_score_arr else 0
+            sorted_dates = sorted(avg_sentiment_by_date.keys())
+            s_score_arr = [avg_sentiment_by_date[date] for date in sorted_dates]
+            total_product_sentiments.append(s_score_arr[-1] if len(s_score_arr) > 0 else 0)
+
+        total_sentiment_score = (sum(total_product_sentiments) / len(total_product_sentiments)) * 10
 
         alert_type = product_alert["alert_type"]
         min_val = product_alert["min_val"]

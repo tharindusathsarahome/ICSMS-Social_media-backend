@@ -1,54 +1,81 @@
 # app/db/platform_insights_data.py
 
-from bson import ObjectId
+import re
+from collections import defaultdict
 from pymongo import MongoClient
 from datetime import datetime
 
-from app.schemas.post_schemas import Post, Comment, SubComment
 from app.utils.common import convert_s_score_to_color
+
+
+comment_sentiment_threshold = 0.7
+sub_comment_sentiment_threshold = 0.4
 
 
 def keyword_trend_count(db: MongoClient, platform: str, start_date: str, end_date: str):
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
-    keyword_trend_count = {}
+    keyword_trend_count = { "products": [], "s_scores": [], "colors": [] }
 
-    pipeline = [
-        {
-            "$match": {
-                "date": {"$gte": start_datetime, "$lte": end_datetime},
-                "sm_id": platform
-            }
-        },
-        {
-            "$group": {
-                "_id": "$identified_keyword",  
-                "count": {"$sum": 1}  
-            }
-        },
-        {
-            "$sort": {"count": -1}  
-        },
-        {
-            "$project": {
-                "_id": 0,  
-                "identified_keyword": "$_id",
-                "count": 1
-            }
-        }
-    ]
+    CustomProducts = list(db.CustomProducts.find())
 
-    result = list(db.IdentifiedKeywords.aggregate(pipeline))
+    for CustomProduct in CustomProducts:
+        productName = CustomProduct["product"]
 
-    for keyword in result:
-        word = keyword['identified_keyword']
-        if word[0] == "#":
-            word = word[1:]
-            word = word.title()
-        keyword_trend_count[word] = keyword['count']
+        identified_products = list(db.IdentifiedProducts.find({
+            "sm_id": platform,
+            "identified_product": re.compile(CustomProduct["product"], re.IGNORECASE)
+        }))
+        total_product_sentiments = []
 
-    keyword_trend_count = dict(list(keyword_trend_count.items())[:5])
+        for identified_product in identified_products:
+            post_id = identified_product["post_id"]
+
+            post = db.Post.find_one({"_id": post_id})
+            if not post:
+                continue
+
+            comments = list(db.Comment.find({"post_id": post_id}))
+            comment_ids = [comment["_id"] for comment in comments]
+
+            comment_sentiments = list(db.CommentSentiment.find({"comment_id": {"$in": comment_ids}, "date_calculated": {"$gte": start_datetime, "$lte": end_datetime}}))
+
+            sub_comments = list(db.SubComment.find({"comment_id": {"$in": comment_ids}}))
+            sub_comment_ids = [sub_comment["_id"] for sub_comment in sub_comments]
+
+            sub_comment_sentiments = list(db.SubCommentSentiment.find({"sub_comment_id": {"$in": sub_comment_ids}, "date_calculated": {"$gte": start_datetime, "$lte": end_datetime}}))
+
+            sentiment_by_date = defaultdict(list)
+
+            for comment in comments:
+                comment_id = comment["_id"]
+                comment_date = comment["date"].date()
+                sentiment = next((cs["s_score"] for cs in comment_sentiments if cs["comment_id"] == comment_id), 0)
+                sentiment_by_date[comment_date].append(sentiment * comment_sentiment_threshold)
+
+            for sub_comment in sub_comments:
+                sub_comment_id = sub_comment["_id"]
+                sub_comment_date = sub_comment["date"].date()
+                sentiment = next((scs["s_score"] for scs in sub_comment_sentiments if scs["sub_comment_id"] == sub_comment_id), 0)
+                sentiment_by_date[sub_comment_date].append(sentiment * sub_comment_sentiment_threshold)
+
+            avg_sentiment_by_date = {}
+            for date, sentiments in sentiment_by_date.items():
+                avg_sentiment_by_date[date] = sum(sentiments) / len(sentiments)
+
+            sorted_dates = sorted(avg_sentiment_by_date.keys())
+            s_score_arr = [avg_sentiment_by_date[date] for date in sorted_dates]
+            print(productName, post_id, s_score_arr[-1])
+            total_product_sentiments.append(s_score_arr[-1] if len(s_score_arr) > 0 else 0)
+
+        if len(total_product_sentiments) != 0:
+            total_sentiment_score = (sum(total_product_sentiments) / len(total_product_sentiments))
+            
+            keyword_trend_count["products"].append(productName.title())
+            keyword_trend_count["s_scores"].append(round(total_sentiment_score * 10, 1))
+            keyword_trend_count["colors"].append(convert_s_score_to_color(total_sentiment_score))
+
 
     return keyword_trend_count
 

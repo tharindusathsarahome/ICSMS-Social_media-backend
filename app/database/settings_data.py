@@ -19,7 +19,7 @@ def get_campaigns(db: MongoClient) -> list:
         post = db.Post.find_one({"_id": campaign["post_id"]}, {"_id": 0, "description": 1, "sm_id": 1, "author": 1})
         campaign["description"] = post["description"]
         campaign["platform"] = post["sm_id"]
-        campaign["s_score"] = round((campaign["s_score_arr"][-1] + 1) / 2, 1)
+        campaign["s_score"] = round((campaign["s_score_arr"][-1] + 1) / 2, 2)
         campaign["company"] = post["author"]
         campaign["color"] = convert_s_score_to_color(campaign["s_score_arr"][-1])
         campaign["id"] = str(campaign["_id"])
