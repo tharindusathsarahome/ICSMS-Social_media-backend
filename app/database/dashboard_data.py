@@ -2,6 +2,10 @@ from pymongo import MongoClient
 from datetime import datetime
 from fastapi import HTTPException
 
+comment_sentiment_threshold = 0.8
+sub_comment_sentiment_threshold = 0.3
+
+
 def get_facebook_analysis_data(db:MongoClient,start_date:str,end_date:str):
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime = datetime.strptime(end_date,"%Y-%m-%d")
@@ -154,8 +158,6 @@ def get_setiment_percentage(db:MongoClient,start_date:str,end_date:str):
     end_datetime = datetime.strptime(end_date,"%Y-%m-%d")
 
     negative, neutral, positive = 0, 0, 0
-    comment_sentiment_threshold = 0.7
-    sub_comment_sentiment_threshold = 0.4
 
     cursor_Comments = db.CommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime}}, 
@@ -211,9 +213,6 @@ def get_sentimentscore_facebook(db:MongoClient,start_date:str,end_date:str):
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime   = datetime.strptime(end_date,"%Y-%m-%d")
 
-    comment_sentiment_threshold = 0.7
-    sub_comment_sentiment_threshold = 0.4
-
     cursor_Comments = db.CommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime},
          "sm_id":"SM01"}, 
@@ -250,9 +249,6 @@ def get_sentimentscore_facebook(db:MongoClient,start_date:str,end_date:str):
 def get_sentimentscore_instagram(db:MongoClient,start_date:str,end_date:str):
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime   = datetime.strptime(end_date,"%Y-%m-%d")
-
-    comment_sentiment_threshold = 0.7
-    sub_comment_sentiment_threshold = 0.4
 
     cursor_Comments = db.CommentSentiment.find(
         {"date_calculated":{"$gte":start_datetime,"$lte":end_datetime},

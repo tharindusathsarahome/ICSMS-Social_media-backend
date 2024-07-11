@@ -8,8 +8,8 @@ from datetime import datetime
 from app.utils.common import convert_s_score_to_color
 
 
-comment_sentiment_threshold = 0.7
-sub_comment_sentiment_threshold = 0.4
+comment_sentiment_threshold = 0.8
+sub_comment_sentiment_threshold = 0.3
 
 
 def keyword_trend_count(db: MongoClient, platform: str, start_date: str, end_date: str):
@@ -51,14 +51,16 @@ def keyword_trend_count(db: MongoClient, platform: str, start_date: str, end_dat
             for comment in comments:
                 comment_id = comment["_id"]
                 comment_date = comment["date"].date()
-                sentiment = next((cs["s_score"] for cs in comment_sentiments if cs["comment_id"] == comment_id), 0)
-                sentiment_by_date[comment_date].append(sentiment * comment_sentiment_threshold)
+                sentiment = next((cs["s_score"] for cs in comment_sentiments if cs["comment_id"] == comment_id), None)
+                if sentiment:
+                    sentiment_by_date[comment_date].append(sentiment * comment_sentiment_threshold)
 
             for sub_comment in sub_comments:
                 sub_comment_id = sub_comment["_id"]
                 sub_comment_date = sub_comment["date"].date()
                 sentiment = next((scs["s_score"] for scs in sub_comment_sentiments if scs["sub_comment_id"] == sub_comment_id), 0)
-                sentiment_by_date[sub_comment_date].append(sentiment * sub_comment_sentiment_threshold)
+                if sentiment:
+                    sentiment_by_date[comment_date].append(sentiment * sub_comment_sentiment_threshold)
 
             avg_sentiment_by_date = {}
             for date, sentiments in sentiment_by_date.items():
@@ -66,7 +68,7 @@ def keyword_trend_count(db: MongoClient, platform: str, start_date: str, end_dat
 
             sorted_dates = sorted(avg_sentiment_by_date.keys())
             s_score_arr = [avg_sentiment_by_date[date] for date in sorted_dates]
-            print(productName, post_id, s_score_arr[-1])
+            
             total_product_sentiments.append(s_score_arr[-1] if len(s_score_arr) > 0 else 0)
 
         if len(total_product_sentiments) != 0:
@@ -123,7 +125,6 @@ def highlighted_comments(db: MongoClient, platform: str, start_date: str, end_da
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
     highlighted_comments = []
-    comment_sentiment_threshold = 0.7
 
     comment_sentiments = list(db.CommentSentiment.find({ "date_calculated": {"$gte": start_datetime, "$lte": end_datetime}, "sm_id": platform }))
 

@@ -3,8 +3,8 @@ from collections import defaultdict
 from typing import List, Dict
 
 
-comment_sentiment_threshold = 0.7
-sub_comment_sentiment_threshold = 0.4
+comment_sentiment_threshold = 0.8
+sub_comment_sentiment_threshold = 0.3
 
 
 def check_product_alerts(db: MongoClient) -> List[Dict]:
@@ -43,13 +43,15 @@ def check_product_alerts(db: MongoClient) -> List[Dict]:
                 comment_id = comment["_id"]
                 comment_date = comment["date"].date()
                 sentiment = next((cs["s_score"] for cs in comment_sentiments if cs["comment_id"] == comment_id), 0)
-                sentiment_by_date[comment_date].append(sentiment * comment_sentiment_threshold)
+                if sentiment:
+                    sentiment_by_date[comment_date].append(sentiment * comment_sentiment_threshold)
 
             for sub_comment in sub_comments:
                 sub_comment_id = sub_comment["_id"]
                 sub_comment_date = sub_comment["date"].date()
                 sentiment = next((scs["s_score"] for scs in sub_comment_sentiments if scs["sub_comment_id"] == sub_comment_id), 0)
-                sentiment_by_date[sub_comment_date].append(sentiment * sub_comment_sentiment_threshold)
+                if sentiment:
+                    sentiment_by_date[comment_date].append(sentiment * sub_comment_sentiment_threshold)
 
             avg_sentiment_by_date = {}
             for date, sentiments in sentiment_by_date.items():
