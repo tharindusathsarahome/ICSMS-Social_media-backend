@@ -7,7 +7,7 @@ from fastapi.encoders import jsonable_encoder
 
 from app.database.dashboard_data import get_facebook_analysis_data
 from app.database.dashboard_data import get_products_trend_data,get_keyword_trend_data,get_setiment_percentage,get_instagram_analysis_data,get_sentimentscore_facebook,get_sentimentscore_instagram
-from app.services.forecast_service import generate_forecast
+# from app.services.forecast_service import generate_forecast
 from app.dependencies.mongo_db_authentication import get_database
 
 router = APIRouter()
@@ -115,12 +115,12 @@ async def sentimentscore(
         raise HTTPException(status_code=500,detail=f"Error:{str(e)}")
     
     
-@router.get("/product_prediction")
-async def product_prediction(
-    db: MongoClient = Depends(get_database),
-):
-    try:
-        forecast_data = await generate_forecast(db)
-        return forecast_data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @router.get("/product_prediction")
+# async def product_prediction(
+#     db: MongoClient = Depends(get_database),
+# ):
+#     try:
+#         forecast_data = await generate_forecast(db)
+#         return forecast_data
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
