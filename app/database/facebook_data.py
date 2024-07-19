@@ -37,6 +37,8 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
 
         if db.Post.find_one({"sm_post_id": post['id']}) is None:
             db.Post.insert_one(post_model.model_dump())
+        elif db.Post.find_one({"sm_post_id": post['id']})['img_url'] != post_model.img_url:
+            db.Post.update_one({"sm_post_id": post['id']}, {"$set": {"img_url": post_model.img_url}})
         db_post_id = db.Post.find_one({"sm_post_id": post['id']})['_id']
 
         comments = graph.get_object(f"{post['id']}/comments", fields='id,message,created_time,from,likes.summary(true),comments.summary(true),permalink_url')
@@ -112,6 +114,8 @@ def fetch_and_store_instagram_data(db: MongoClient, graph: GraphAPI):
 
             if db.Post.find_one({"sm_post_id": post_details['id']}) is None:
                 db.Post.insert_one(post_model.model_dump())
+            elif db.Post.find_one({"sm_post_id": post_details['id']})['img_url'] != post_model.img_url:
+                db.Post.update_one({"sm_post_id": post_details['id']}, {"$set": {"img_url": post_model.img_url}})
             db_post_id = db.Post.find_one({"sm_post_id": post_details['id']})['_id']
 
             comments = graph.get_object(f"{post_x_id}/comments", fields='id,from,like_count,text,timestamp,username,replies')

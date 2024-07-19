@@ -10,6 +10,15 @@ from app.tasks.notification_tasks import run_check_product_alerts, run_check_sen
 
 router = APIRouter()
 
+def run_all_tasks(background_tasks: BackgroundTasks):
+    background_tasks.add_task(run_fetch_and_store_facebook)
+    background_tasks.add_task(run_fetch_and_store_instagram)
+    background_tasks.add_task(run_analyze_comments)
+    background_tasks.add_task(run_update_campaigns)
+    background_tasks.add_task(run_check_product_alerts)
+    background_tasks.add_task(run_check_sentiment_shifts)
+    return {"message": "All tasks started."}
+
 
 @router.get("/fetch_and_store_facebook", response_model=dict)
 async def fetch_and_store_facebook(background_tasks: BackgroundTasks):
@@ -55,3 +64,7 @@ async def check_product_alerts(background_tasks: BackgroundTasks):
 async def check_sentiment_shifts(background_tasks: BackgroundTasks):
     background_tasks.add_task(run_check_sentiment_shifts)
     return {"message": "Checking sentiment shifts started."}
+
+@router.get("/all", response_model=dict)
+async def all(background_tasks: BackgroundTasks):
+    return run_all_tasks(background_tasks)
