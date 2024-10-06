@@ -3,11 +3,22 @@ from collections import defaultdict
 from typing import List, Dict
 
 
-comment_sentiment_threshold = 0.8
-sub_comment_sentiment_threshold = 0.3
+comment_sentiment_threshold = 1
+sub_comment_sentiment_threshold = 0.6
 
 
 def check_product_alerts(db: MongoClient) -> List[Dict]:
+    """
+    Checks for product alerts based on sentiment scores and predefined alert thresholds.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        List[Dict]: A list of dictionaries containing products that have triggered an alert, 
+        with their total sentiment score and alert details.
+    """
+    
     alerts_within_range = []
 
     product_alerts = list(db.ProductAlert.find({}))
@@ -81,6 +92,16 @@ def check_product_alerts(db: MongoClient) -> List[Dict]:
 
 
 def check_sentiment_shifts(db: MongoClient) -> List[Dict]:
+    """
+    Checks for significant sentiment shifts on social media platforms based on predefined thresholds.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        List[Dict]: A list of dictionaries with platform sentiment shifts and their details.
+    """
+    
     results_within_range = []
 
     sentiment_shifts = list(db.SentimentShift.find({}))

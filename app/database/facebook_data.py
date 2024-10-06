@@ -13,6 +13,17 @@ from app.services.sentiment_analysis_service import analyze_sentiment
 # ------------------ CRON TASKS ------------------
 
 def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
+    """
+    Fetches and stores Facebook data including posts, comments, and sub-comments.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        graph (GraphAPI): The Facebook GraphAPI object used to fetch data.
+
+    Returns:
+        str: A success message including the number of comments and sub-comments fetched.
+    """
+    
     posts = graph.get_object('me/posts', fields='id,message,created_time,from,likes.summary(true),comments.summary(true),full_picture,shares,permalink_url,is_popular')
 
     commentsFetched = 0
@@ -81,6 +92,17 @@ def fetch_and_store_facebook_data(db: MongoClient, graph: GraphAPI):
 
 
 def fetch_and_store_instagram_data(db: MongoClient, graph: GraphAPI):
+    """
+    Fetches and stores Instagram data including posts, comments, and sub-comments.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        graph (GraphAPI): The Instagram GraphAPI object used to fetch data.
+
+    Returns:
+        str: A success message including the number of comments and sub-comments fetched.
+    """
+    
     accounts = graph.get_object('me/accounts', fields='connected_instagram_account')
 
     commentsFetched = 0
@@ -153,6 +175,16 @@ def fetch_and_store_instagram_data(db: MongoClient, graph: GraphAPI):
 
 
 def analyze_and_update_comments(db: MongoClient):
+    """
+    Analyzes the sentiment of all comments and updates the database with sentiment scores.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        str: A success message including the number of analyzed comments.
+    """
+    
     all_comments = db.Comment.find()
 
     anylyzed_comments = 0
@@ -182,6 +214,16 @@ def analyze_and_update_comments(db: MongoClient):
 
 
 def analyze_and_update_subcomments(db: MongoClient):
+    """
+    Analyzes the sentiment of all sub-comments and updates the database with sentiment scores.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        str: A success message including the number of analyzed sub-comments.
+    """
+    
     all_subcomments = db.SubComment.find()
 
     anylyzed_subcomments = 0

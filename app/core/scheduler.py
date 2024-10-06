@@ -10,6 +10,20 @@ import asyncio
 
 
 def start_scheduler():
+    """
+    Starts the background scheduler to handle recurring tasks.
+
+    The following tasks will be scheduled:
+        - Fetch and store Facebook posts.
+        - Calculate post overview by date.
+        - Add identified products and keywords.
+        - Update campaigns.
+        - Analyze comments.
+
+    Returns:
+        BackgroundScheduler: The scheduler instance that was started.
+    """
+    
     scheduler = BackgroundScheduler()
 
     def run_async_task():

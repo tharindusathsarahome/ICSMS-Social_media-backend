@@ -8,11 +8,24 @@ from datetime import datetime
 from app.utils.common import convert_s_score_to_color
 
 
-comment_sentiment_threshold = 0.8
-sub_comment_sentiment_threshold = 0.3
+comment_sentiment_threshold = 1
+sub_comment_sentiment_threshold = 0.6
 
 
 def keyword_trend_count(db: MongoClient, platform: str, start_date: str, end_date: str):
+    """
+    Counts keyword trends for a specified platform between given start and end dates.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        platform (str): The social media platform (e.g., Facebook, Instagram).
+        start_date (str): The start date of the analysis in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the analysis in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary containing the count of keywords and their sentiment scores.
+    """
+    
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
@@ -69,7 +82,7 @@ def keyword_trend_count(db: MongoClient, platform: str, start_date: str, end_dat
             sorted_dates = sorted(avg_sentiment_by_date.keys())
             s_score_arr = [avg_sentiment_by_date[date] for date in sorted_dates]
             
-            total_product_sentiments.append(s_score_arr[-1] if len(s_score_arr) > 0 else 0)
+            total_product_sentiments.append(sum(s_score_arr) / len(s_score_arr) if len(s_score_arr) > 0 else 0)
 
         if len(total_product_sentiments) != 0:
             total_sentiment_score = (sum(total_product_sentiments) / len(total_product_sentiments))
@@ -83,6 +96,20 @@ def keyword_trend_count(db: MongoClient, platform: str, start_date: str, end_dat
 
 
 def total_reactions(db: MongoClient, platform: str, start_date: str, end_date: str):
+    """
+    Calculates the total reactions (likes, shares) for posts on a specified platform 
+    within a date range.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        platform (str): The social media platform (e.g., Facebook, Instagram).
+        start_date (str): The start date of the analysis in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the analysis in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary containing total reactions categorized by date.
+    """
+    
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
@@ -102,6 +129,19 @@ def total_reactions(db: MongoClient, platform: str, start_date: str, end_date: s
 
 
 def total_comments(db: MongoClient, platform: str, start_date: str, end_date: str):
+    """
+    Calculates the total comments for posts on a specified platform within a date range.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        platform (str): The social media platform (e.g., Facebook, Instagram).
+        start_date (str): The start date of the analysis in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the analysis in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary containing total comments categorized by date.
+    """
+    
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
@@ -121,6 +161,20 @@ def total_comments(db: MongoClient, platform: str, start_date: str, end_date: st
 
 
 def highlighted_comments(db: MongoClient, platform: str, start_date: str, end_date: str):
+    """
+    Retrieves highlighted comments based on sentiment scores for a specified platform 
+    within a date range.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        platform (str): The social media platform (e.g., Facebook, Instagram).
+        start_date (str): The start date of the analysis in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the analysis in 'YYYY-MM-DD' format.
+
+    Returns:
+        list: A list of dictionaries containing highlighted comments with sentiment scores.
+    """
+    
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
 
@@ -162,6 +216,20 @@ def highlighted_comments(db: MongoClient, platform: str, start_date: str, end_da
 
 
 def average_sentiment_score(db: MongoClient, platform: str, start_date: str, end_date: str):
+    """
+    Calculates the average sentiment score for comments and sub-comments on a specified platform 
+    within a date range.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        platform (str): The social media platform (e.g., Facebook, Instagram).
+        start_date (str): The start date of the analysis in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the analysis in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary containing average sentiment scores for comments and sub-comments.
+    """
+    
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
     

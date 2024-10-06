@@ -10,12 +10,33 @@ from fastapi import HTTPException
 
 
 def add_custom_products(db: MongoClient, custom_product: str) -> dict:
+    """
+    Adds a custom product to the database.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        custom_product (str): The name of the custom product to add.
+
+    Returns:
+        dict: A dictionary containing the ID of the newly added custom product.
+    """
+    
     product = CustomProducts(product=custom_product.lower())
     result = db.CustomProducts.insert_one(product.dict())
     return {"id": str(result.inserted_id)}
 
 
 def get_custom_products(db: MongoClient) -> List[str]:
+    """
+    Retrieves a list of custom products from the database.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        List[str]: A list of custom product names.
+    """
+    
     custom_products = db.CustomProducts.find({}, {"_id": 0, "product": 1})
 
     products = []
@@ -26,6 +47,16 @@ def get_custom_products(db: MongoClient) -> List[str]:
 
 
 def get_identified_products(db: MongoClient) -> List[dict]:
+    """
+    Retrieves a list of identified products from the database.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        List[dict]: A list of identified products with their details.
+    """
+    
     identified_products = db.IdentifiedProducts.find({}, {"_id": 0, "identified_product": 1})
 
     products = []
@@ -36,6 +67,16 @@ def get_identified_products(db: MongoClient) -> List[dict]:
 
 
 def get_identified_keywords(db: MongoClient) -> List[dict]:
+    """
+    Retrieves a list of identified keywords from the database.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        List[dict]: A list of identified keywords with their details.
+    """
+    
     identified_keywords = db.IdentifiedKeywords.find({}, {"_id": 0, "identified_keyword": 1})
 
     keywords = []
@@ -46,6 +87,18 @@ def get_identified_keywords(db: MongoClient) -> List[dict]:
 
 
 def get_identified_products_by_date(db: MongoClient, start_date: datetime, end_date: datetime) -> List[dict]:
+    """
+    Retrieves identified products from the database filtered by a date range.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+        start_date (datetime): The start date of the filter.
+        end_date (datetime): The end date of the filter.
+
+    Returns:
+        List[dict]: A list of identified products filtered by the specified date range.
+    """
+    
     pipeline = [
         {
             "$match": {
@@ -85,6 +138,16 @@ def get_identified_products_by_date(db: MongoClient, start_date: datetime, end_d
 
 
 def add_identified_products(db: MongoClient):
+    """
+    Identifies and adds products based on the descriptions of existing posts in the database.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        str: A success message indicating identified products have been added.
+    """
+    
     posts = db.Post.find()
 
     for post in posts:
@@ -111,6 +174,16 @@ def add_identified_products(db: MongoClient):
 
 
 def add_identified_keywords(db:MongoClient):
+    """
+    Identifies and adds keywords based on the descriptions of existing posts in the database.
+
+    Parameters:
+        db (MongoClient): The MongoDB client instance.
+
+    Returns:
+        str: A success message indicating identified keywords have been added.
+    """
+    
     posts = db.Post.find()
 
     for post in posts:

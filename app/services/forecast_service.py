@@ -5,6 +5,18 @@ from app.models.prophet_model import ProphetModel, preprocess_data
 
 
 async def generate_forecast(db) -> list:
+    """
+    Generates a forecast based on the provided time series data.
+
+    Parameters:
+        data (DataFrame): A pandas DataFrame containing the time series data for forecasting.
+    
+    Returns:
+        DataFrame: A DataFrame containing the forecasted results.
+    
+    Raises:
+        ValueError: If the input data is not in the correct format.
+    """
     product_forecast = []
 
     df = pd.read_csv('app/models/data.csv')

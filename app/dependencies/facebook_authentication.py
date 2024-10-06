@@ -9,7 +9,13 @@ from app.core.config import FACEBOOK_USER_TOKEN, FACEBOOK_API_VERSION
 
 async def authenticate_with_facebook() -> GraphAPI:
     """
-    Authenticate with Facebook and return the GraphAPI object.
+    Authenticates with the Facebook Graph API and returns the GraphAPI object.
+
+    Returns:
+        GraphAPI: An instance of the GraphAPI with an access token for making API calls.
+
+    Raises:
+        HTTPException: If authentication with Facebook fails.
     """
     try:
         async with httpx.AsyncClient() as client:
@@ -25,6 +31,9 @@ async def authenticate_with_facebook() -> GraphAPI:
 
 async def authenticate_with_instagram() -> GraphAPI:
     """
-    Authenticate with Instagram and return the GraphAPI object.
+    Authenticates with Instagram and returns the GraphAPI object.
+
+    Returns:
+        GraphAPI: An instance of the GraphAPI with an access token for making API calls.
     """
     return GraphAPI(access_token=FACEBOOK_USER_TOKEN)

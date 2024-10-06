@@ -15,6 +15,19 @@ cognito_public_keys = get_cognito_public_keys()
 
 
 def decode_jwt(token: str):
+    """
+    Decodes a JWT token and retrieves the payload.
+
+    Parameters:
+        token (str): The JWT token to decode.
+    
+    Returns:
+        TokenPayload: A TokenPayload object containing user information extracted from the token.
+    
+    Raises:
+        JWTError: If the token is invalid or expired.
+    """
+    
     global cognito_public_keys
     try:
         header = jwt.get_unverified_header(token)

@@ -2,11 +2,23 @@ from pymongo import MongoClient
 from datetime import datetime
 from fastapi import HTTPException
 
-comment_sentiment_threshold = 0.8
-sub_comment_sentiment_threshold = 0.3
+comment_sentiment_threshold = 1
+sub_comment_sentiment_threshold = 0.6
 
 
-def get_facebook_analysis_data(db:MongoClient,start_date:str,end_date:str):
+def get_facebook_analysis_data(db: MongoClient, start_date: str, end_date: str):
+    """
+    Fetches Facebook analysis data for posts between the given start and end dates.
+
+    Parameters:
+        db (MongoClient): MongoDB client instance.
+        start_date (str): The start date of the range in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the range in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary containing the total reactions and comments for the given period.
+    """
+    
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime = datetime.strptime(end_date,"%Y-%m-%d")
 
@@ -45,7 +57,19 @@ def get_facebook_analysis_data(db:MongoClient,start_date:str,end_date:str):
 
     return total_results
 
-def get_instagram_analysis_data(db:MongoClient,start_date:str,end_date:str):
+def get_instagram_analysis_data(db: MongoClient, start_date: str, end_date: str):
+    """
+    Fetches Instagram analysis data for posts between the given start and end dates.
+
+    Parameters:
+        db (MongoClient): MongoDB client instance.
+        start_date (str): The start date of the range in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the range in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary containing the total reactions and comments for the given period.
+    """
+    
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime = datetime.strptime(end_date,"%Y-%m-%d")
 
@@ -84,8 +108,19 @@ def get_instagram_analysis_data(db:MongoClient,start_date:str,end_date:str):
 
     return total_results
 
+def get_products_trend_data(db: MongoClient, start_date: str, end_date: str):
+    """
+    Fetches the trending products data between the given start and end dates.
 
-def get_products_trend_data(db:MongoClient,start_date:str,end_date:str):
+    Parameters:
+        db (MongoClient): MongoDB client instance.
+        start_date (str): The start date of the range in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the range in 'YYYY-MM-DD' format.
+
+    Returns:
+        list: A list of trending products with their respective counts.
+    """
+    
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime = datetime.strptime(end_date,"%Y-%m-%d")
 
@@ -117,8 +152,19 @@ def get_products_trend_data(db:MongoClient,start_date:str,end_date:str):
     
     return result
 
+def get_keyword_trend_data(db: MongoClient, start_date: str, end_date: str):
+    """
+    Fetches the trending keywords data between the given start and end dates.
 
-def get_keyword_trend_data(db:MongoClient,start_date:str,end_date:str):
+    Parameters:
+        db (MongoClient): MongoDB client instance.
+        start_date (str): The start date of the range in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the range in 'YYYY-MM-DD' format.
+
+    Returns:
+        list: A list of trending keywords with their respective counts.
+    """
+    
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime = datetime.strptime(end_date,"%Y-%m-%d")
 
@@ -153,7 +199,19 @@ def get_keyword_trend_data(db:MongoClient,start_date:str,end_date:str):
 
 
 #overall sentiment_dashboard
-def get_setiment_percentage(db:MongoClient,start_date:str,end_date:str):
+def get_setiment_percentage(db: MongoClient, start_date: str, end_date: str):
+    """
+    Calculates the sentiment percentage (negative, neutral, positive) for the comments between the given start and end dates.
+
+    Parameters:
+        db (MongoClient): MongoDB client instance.
+        start_date (str): The start date of the range in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the range in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary containing sentiment percentages for negative, neutral, and positive sentiments.
+    """
+    
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime = datetime.strptime(end_date,"%Y-%m-%d")
 
@@ -209,7 +267,19 @@ def get_setiment_percentage(db:MongoClient,start_date:str,end_date:str):
     return chart_data
 
 
-def get_sentimentscore_facebook(db:MongoClient,start_date:str,end_date:str):
+def get_sentimentscore_facebook(db: MongoClient, start_date: str, end_date: str):
+    """
+    Calculates the average sentiment score for Facebook comments and sub-comments between the given start and end dates.
+
+    Parameters:
+        db (MongoClient): MongoDB client instance.
+        start_date (str): The start date of the range in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the range in 'YYYY-MM-DD' format.
+
+    Returns:
+        float: The average sentiment score for Facebook posts during the given period.
+    """
+    
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime   = datetime.strptime(end_date,"%Y-%m-%d")
 
@@ -246,7 +316,19 @@ def get_sentimentscore_facebook(db:MongoClient,start_date:str,end_date:str):
     return round(final_average,2)
 
 
-def get_sentimentscore_instagram(db:MongoClient,start_date:str,end_date:str):
+def get_sentimentscore_instagram(db: MongoClient, start_date: str, end_date: str):
+    """
+    Calculates the average sentiment score for Instagram comments and sub-comments between the given start and end dates.
+
+    Parameters:
+        db (MongoClient): MongoDB client instance.
+        start_date (str): The start date of the range in 'YYYY-MM-DD' format.
+        end_date (str): The end date of the range in 'YYYY-MM-DD' format.
+
+    Returns:
+        float: The average sentiment score for Instagram posts during the given period.
+    """
+    
     start_datetime = datetime.strptime(start_date,"%Y-%m-%d")
     end_datetime   = datetime.strptime(end_date,"%Y-%m-%d")
 

@@ -12,11 +12,26 @@ from app.utils.common import convert_s_score_to_color
 import re
 
 
-comment_sentiment_threshold = 0.8
-sub_comment_sentiment_threshold = 0.3
+comment_sentiment_threshold = 1
+sub_comment_sentiment_threshold = 0.6
 
 
 def check_adding_campaign(db: MongoClient, platform: str, post_description_part: str) -> dict:
+    """
+    Checks if a new campaign can be created by searching for posts matching the provided description.
+
+    Parameters:
+        db (MongoClient): The MongoDB client used for querying.
+        platform (str): The platform (e.g., Facebook, Instagram) on which to search for the post.
+        post_description_part (str): A substring of the post description to identify the campaign.
+    
+    Returns:
+        dict: A dictionary representing the created campaign.
+    
+    Raises:
+        ValueError: If the post description part already exists in another campaign or the post is not found.
+    """
+    
     allPosts = list(db.Post.find({"sm_id": platform}, {"_id": 1, "description": 1}))
 
     for post in allPosts:
@@ -33,7 +48,17 @@ def check_adding_campaign(db: MongoClient, platform: str, post_description_part:
 
 
 def create_campaign(db: MongoClient, post_id: ObjectId) -> str:
+    """
+    Creates a new campaign for the specified post.
 
+    Parameters:
+        db (MongoClient): The MongoDB client used for querying and insertion.
+        post_id (ObjectId): The ID of the post for which the campaign is created.
+    
+    Returns:
+        str: The ID of the newly created campaign.
+    """
+    
     comments = list(db.Comment.find({"post_id": post_id}))
     comment_ids = [comment["_id"] for comment in comments]
 
@@ -78,6 +103,17 @@ def create_campaign(db: MongoClient, post_id: ObjectId) -> str:
 
 
 def get_campaign_analysis_details(db: MongoClient, platform: str) -> dict:
+    """
+    Retrieves campaign analysis details for a given platform.
+
+    Parameters:
+        db (MongoClient): The MongoDB client used for querying.
+        platform (str): The platform (e.g., Facebook, Instagram) from which campaign analysis is retrieved.
+    
+    Returns:
+        dict: A dictionary containing the campaign details.
+    """
+    
     posts = db.Post.find({"sm_id": platform})
     post_ids = [post["_id"] for post in posts]
 
@@ -128,6 +164,16 @@ def get_campaign_analysis_details(db: MongoClient, platform: str) -> dict:
 
 
 def calculate_post_overview_by_date(db: MongoClient) -> str:
+    """
+    Calculates the post overview data by date for each post.
+
+    Parameters:
+        db (MongoClient): The MongoDB client used for querying and updating.
+    
+    Returns:
+        str: A success message after calculation.
+    """
+    
     posts = list(db.Post.find({}))
 
     for post in posts:
@@ -149,6 +195,16 @@ def calculate_post_overview_by_date(db: MongoClient) -> str:
 
 
 def update_campaigns(db: MongoClient) -> str:
+    """
+    Updates the sentiment scores for all campaigns based on new comment and sub-comment sentiments.
+
+    Parameters:
+        db (MongoClient): The MongoDB client used for querying and updating.
+    
+    Returns:
+        str: A success message after the campaigns are updated.
+    """
+    
     campaigns = list(db.Campaign.find({}))
 
     for campaign in campaigns:
